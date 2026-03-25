@@ -1,31 +1,66 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Platform, View, StyleSheet } from 'react-native';
+import { AppProvider, useAppContext } from '../context/AppContext';
+import { StatusBar } from 'expo-status-bar';
 
-import { useColorScheme } from '@/components/useColorScheme';
+export { ErrorBoundary } from 'expo-router';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+function NavigationGuard({ children }: { children: React.ReactNode }) {
+  const { hasOnboarded } = useAppContext();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    const inOnboarding = segments[0] === 'onboarding';
+    if (!hasOnboarded && !inOnboarding) {
+      router.replace('/onboarding');
+    } else if (hasOnboarded && inOnboarding) {
+      router.replace('/(tabs)');
+    }
+  }, [hasOnboarded, segments]);
+
+  return <>{children}</>;
+}
+
+function MobileFrame({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+
+  return (
+    <View style={webStyles.outerContainer}>
+      <View style={webStyles.phoneFrame}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+const webStyles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phoneFrame: {
+    width: 390,
+    height: 844,
+    backgroundColor: '#F7F9FC',
+    borderRadius: 40,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? { boxShadow: '0 25px 80px rgba(0,0,0,0.4)' } as any : {}),
+  },
+});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -36,22 +71,19 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  if (!loaded) return null;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AppProvider>
+      <StatusBar style="dark" />
+      <MobileFrame>
+        <NavigationGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </NavigationGuard>
+      </MobileFrame>
+    </AppProvider>
   );
 }
