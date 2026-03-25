@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
-import type { BehavioralSignal } from '../data/mockData';
+import type { BehavioralSignal } from '../data/dataEngine';
 
 const iconConfig: Record<string, { emoji: string; bg: string }> = {
   moon: { emoji: '\u{1F319}', bg: Colors.purpleLight },

@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/colors';
 import WellnessGauge from '../../components/WellnessGauge';
 import SignalCard from '../../components/SignalCard';
-import { todayData, getTodaySignals } from '../../data/mockData';
+import { getTodayData, getTodaySignals } from '../../data/dataEngine';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -13,6 +13,7 @@ function getGreeting(): string {
 }
 
 export default function DashboardScreen() {
+  const todayData = getTodayData();
   const signals = getTodaySignals();
 
   return (

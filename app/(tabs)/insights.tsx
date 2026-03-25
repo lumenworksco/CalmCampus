@@ -2,9 +2,11 @@ import React from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/colors';
 import TrendChart from '../../components/TrendChart';
-import { weeklyData } from '../../data/mockData';
+import { getWeeklyData, getWeeklyInsight } from '../../data/dataEngine';
 
 export default function InsightsScreen() {
+  const weeklyData = getWeeklyData(7);
+  const insight = getWeeklyInsight();
   const labels = weeklyData.map((d) => d.dayLabel);
 
   return (
@@ -20,9 +22,7 @@ export default function InsightsScreen() {
           <Text style={styles.insightIcon}>{'\u{2728}'}</Text>
           <View style={styles.insightContent}>
             <Text style={styles.insightTitle}>Summary</Text>
-            <Text style={styles.insightText}>
-              Sleep dropped to 5.4h mid-week, coinciding with higher screen time. Patterns are recovering.
-            </Text>
+            <Text style={styles.insightText}>{insight}</Text>
           </View>
         </View>
       </View>
