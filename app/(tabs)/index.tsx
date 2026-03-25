@@ -4,6 +4,7 @@ import { Colors } from '../../constants/colors';
 import WellnessGauge from '../../components/WellnessGauge';
 import SignalCard from '../../components/SignalCard';
 import { getTodayData, getTodaySignals } from '../../data/dataEngine';
+import { usePedometer } from '../../hooks/usePedometer';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -15,6 +16,24 @@ function getGreeting(): string {
 export default function DashboardScreen() {
   const todayData = getTodayData();
   const signals = getTodaySignals();
+  const { stepsToday, isAvailable } = usePedometer();
+
+  // Build the full signal list — steps from real data at the top
+  const allSignals = isAvailable
+    ? [
+        {
+          id: 'steps',
+          label: 'Steps',
+          value: stepsToday.toLocaleString(),
+          unit: 'steps',
+          trend: (stepsToday >= 5000 ? 'up' : stepsToday >= 2000 ? 'stable' : 'down') as 'up' | 'down' | 'stable',
+          trendIsGood: stepsToday >= 4000,
+          icon: 'steps',
+          isLive: true,
+        },
+        ...signals,
+      ]
+    : signals;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -31,10 +50,10 @@ export default function DashboardScreen() {
       {/* Signals Section */}
       <Text style={styles.sectionTitle}>Today's Signals</Text>
       <View style={styles.signalsContainer}>
-        {signals.map((signal, i) => (
+        {allSignals.map((signal, i) => (
           <React.Fragment key={signal.id}>
-            <SignalCard signal={signal} />
-            {i < signals.length - 1 && <View style={styles.separator} />}
+            <SignalCard signal={signal} isLive={'isLive' in signal && signal.isLive} />
+            {i < allSignals.length - 1 && <View style={styles.separator} />}
           </React.Fragment>
         ))}
       </View>
