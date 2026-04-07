@@ -19,6 +19,7 @@ class WellnessGauge extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, animatedScore, child) {
         return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               width: size,

@@ -14,30 +14,43 @@ class TabScaffold extends StatelessWidget {
       tabBar: CupertinoTabBar(
         activeColor: AppColors.accent,
         inactiveColor: AppColors.textTertiary,
-        backgroundColor: CupertinoColors.systemBackground.withValues(alpha: 0.92),
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+        backgroundColor:
+            CupertinoColors.systemBackground.withValues(alpha: 0.94),
+        border: Border(
+            top: BorderSide(
+                color: CupertinoColors.separator.withValues(alpha: 0.3),
+                width: 0.5)),
         items: const [
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.house_fill), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.chart_bar_fill), label: 'Insights'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.leaf_arrow_circlepath), label: 'Calm'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.person_fill), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.house_fill), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.chart_bar_fill), label: 'Insights'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.leaf_arrow_circlepath), label: 'Calm'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.person_fill), label: 'Profile'),
         ],
       ),
       tabBuilder: (context, index) {
         return CupertinoTabView(
           builder: (context) {
+            final Widget screen;
             switch (index) {
               case 0:
-                return const DashboardScreen();
+                screen = const DashboardScreen();
               case 1:
-                return const InsightsScreen();
+                screen = const InsightsScreen();
               case 2:
-                return const InterventionsScreen();
+                screen = const InterventionsScreen();
               case 3:
-                return const ProfileScreen();
+                screen = const ProfileScreen();
               default:
-                return const DashboardScreen();
+                screen = const DashboardScreen();
             }
+            return CupertinoPageScaffold(
+              backgroundColor: AppColors.background,
+              child: screen,
+            );
           },
         );
       },

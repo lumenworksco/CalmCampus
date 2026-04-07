@@ -150,51 +150,45 @@ class DashboardScreen extends StatelessWidget {
                 ),
 
                 // -- Wellness gauge with demo toggle --
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onLongPress: () => repo.toggleDemoMode(),
-                      child: Container(
-                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 28, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                GestureDetector(
+                  onLongPress: () => repo.toggleDemoMode(),
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 1),
                         ),
-                        child: WellnessGauge(score: todayData.wellnessScore),
-                      ),
+                      ],
                     ),
-                    // Demo dot indicator
-                    if (repo.demoMode)
-                      Positioned(
-                        top: 26,
-                        right: 30,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: AppColors.warning,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    AppColors.warning.withValues(alpha: 0.4),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
+                    child: Stack(
+                      children: [
+                        Center(child: WellnessGauge(score: todayData.wellnessScore)),
+                        if (repo.demoMode)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.warning.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                            ],
+                              child: const Text(
+                                'DEMO',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.warning, letterSpacing: 0.5),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
 
                 // -- Crisis banner --
@@ -394,6 +388,7 @@ class DashboardScreen extends StatelessWidget {
       };
 
       return Container(
+        width: double.infinity,
         margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
