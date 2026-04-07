@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/insights_screen.dart';
 import '../screens/interventions_screen.dart';
@@ -47,9 +48,9 @@ class TabScaffold extends StatelessWidget {
               default:
                 screen = const DashboardScreen();
             }
-            return CupertinoPageScaffold(
+            return Scaffold(
               backgroundColor: AppColors.background,
-              child: screen,
+              body: screen,
             );
           },
         );
