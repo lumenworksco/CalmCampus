@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../models/breathing_pattern.dart';
 import '../theme/app_colors.dart';
 
 class BreathingExercise extends StatefulWidget {
-  const BreathingExercise({super.key});
+  final BreathingPattern pattern;
+  const BreathingExercise({super.key, required this.pattern});
 
   @override
   State<BreathingExercise> createState() => _BreathingExerciseState();
@@ -11,58 +14,143 @@ class BreathingExercise extends StatefulWidget {
 
 class _BreathingExerciseState extends State<BreathingExercise>
     with SingleTickerProviderStateMixin {
-  static const _phases = ['Breathe In', 'Hold', 'Breathe Out', 'Hold'];
-  static const _phaseDuration = 4; // seconds
-
   bool _isActive = false;
-  int _currentPhase = 0;
-  int _secondsLeft = 4;
+  int _currentPhaseIndex = 0;
+  int _secondsLeft = 0;
   Timer? _timer;
 
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnim;
-  late final Animation<double> _opacityAnim;
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _opacityAnim;
+
+  BreathingPattern get _pattern => widget.pattern;
 
   @override
   void initState() {
     super.initState();
+    _buildAnimations();
+  }
+
+  @override
+  void didUpdateWidget(covariant BreathingExercise oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pattern.name != widget.pattern.name) {
+      _stop();
+      _controller.dispose();
+      _buildAnimations();
+    }
+  }
+
+  void _buildAnimations() {
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 16), // 4 phases × 4 seconds
+      duration: Duration(seconds: _pattern.totalDuration),
     );
 
-    // Scale: 0.6 → 1.0 (breathe in), hold, 1.0 → 0.6 (breathe out), hold
-    _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.6, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)), weight: 1),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.6).chain(CurveTween(curve: Curves.easeInOut)), weight: 1),
-      TweenSequenceItem(tween: ConstantTween(0.6), weight: 1),
-    ]).animate(_controller);
+    _scaleAnim = _buildScaleSequence().animate(_controller);
+    _opacityAnim = _buildOpacitySequence().animate(_controller);
+  }
 
-    _opacityAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.4, end: 1.0), weight: 1),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.4), weight: 1),
-      TweenSequenceItem(tween: ConstantTween(0.4), weight: 1),
-    ]).animate(_controller);
+  TweenSequence<double> _buildScaleSequence() {
+    final items = <TweenSequenceItem<double>>[];
+    bool lastWasExpand = false;
+
+    for (final phase in _pattern.phases) {
+      final weight = phase.durationSeconds.toDouble();
+
+      if (phase.isExpand) {
+        items.add(TweenSequenceItem(
+          tween: Tween(begin: 0.6, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: weight,
+        ));
+        lastWasExpand = true;
+      } else if (phase.isHold) {
+        // Hold at whatever scale we ended on
+        final holdValue = lastWasExpand ? 1.0 : 0.6;
+        items.add(TweenSequenceItem(
+          tween: ConstantTween(holdValue),
+          weight: weight,
+        ));
+      } else {
+        // Exhale
+        items.add(TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.6)
+              .chain(CurveTween(curve: Curves.easeInOut)),
+          weight: weight,
+        ));
+        lastWasExpand = false;
+      }
+    }
+
+    return TweenSequence(items);
+  }
+
+  TweenSequence<double> _buildOpacitySequence() {
+    final items = <TweenSequenceItem<double>>[];
+    bool lastWasExpand = false;
+
+    for (final phase in _pattern.phases) {
+      final weight = phase.durationSeconds.toDouble();
+
+      if (phase.isExpand) {
+        items.add(TweenSequenceItem(
+          tween: Tween(begin: 0.4, end: 1.0),
+          weight: weight,
+        ));
+        lastWasExpand = true;
+      } else if (phase.isHold) {
+        final holdValue = lastWasExpand ? 1.0 : 0.4;
+        items.add(TweenSequenceItem(
+          tween: ConstantTween(holdValue),
+          weight: weight,
+        ));
+      } else {
+        // Exhale
+        items.add(TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.4),
+          weight: weight,
+        ));
+        lastWasExpand = false;
+      }
+    }
+
+    return TweenSequence(items);
   }
 
   void _start() {
+    HapticFeedback.mediumImpact();
     setState(() {
       _isActive = true;
-      _currentPhase = 0;
-      _secondsLeft = _phaseDuration;
+      _currentPhaseIndex = 0;
+      _secondsLeft = _pattern.phases[0].durationSeconds;
     });
 
     _controller.repeat();
 
-    int tick = 0;
+    int phaseElapsed = 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      tick++;
-      setState(() {
-        _currentPhase = (tick ~/ _phaseDuration) % 4;
-        _secondsLeft = _phaseDuration - (tick % _phaseDuration);
-      });
+      phaseElapsed++;
+
+      final currentPhase = _pattern.phases[_currentPhaseIndex];
+
+      if (phaseElapsed >= currentPhase.durationSeconds) {
+        // Move to next phase
+        phaseElapsed = 0;
+        final nextIndex =
+            (_currentPhaseIndex + 1) % _pattern.phases.length;
+
+        HapticFeedback.mediumImpact();
+
+        setState(() {
+          _currentPhaseIndex = nextIndex;
+          _secondsLeft = _pattern.phases[nextIndex].durationSeconds;
+        });
+      } else {
+        setState(() {
+          _secondsLeft = currentPhase.durationSeconds - phaseElapsed;
+        });
+      }
     });
   }
 
@@ -71,8 +159,8 @@ class _BreathingExerciseState extends State<BreathingExercise>
     _controller.animateTo(0, duration: const Duration(milliseconds: 500));
     setState(() {
       _isActive = false;
-      _currentPhase = 0;
-      _secondsLeft = _phaseDuration;
+      _currentPhaseIndex = 0;
+      _secondsLeft = 0;
     });
   }
 
@@ -90,7 +178,10 @@ class _BreathingExerciseState extends State<BreathingExercise>
       child: Column(
         children: [
           GestureDetector(
-            onTap: _isActive ? _stop : _start,
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              _isActive ? _stop() : _start();
+            },
             child: SizedBox(
               width: 220,
               height: 220,
@@ -120,7 +211,8 @@ class _BreathingExerciseState extends State<BreathingExercise>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      _phases[_currentPhase],
+                                      _pattern
+                                          .phases[_currentPhaseIndex].label,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
@@ -158,7 +250,7 @@ class _BreathingExerciseState extends State<BreathingExercise>
           Text(
             _isActive
                 ? 'Tap the circle to stop'
-                : 'Box breathing: 4s in, hold, out, hold.\nActivates your parasympathetic nervous system.',
+                : '${_pattern.description}\n${_pattern.phases.map((p) => '${p.durationSeconds}s ${p.label.toLowerCase()}').join(', ')}',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,

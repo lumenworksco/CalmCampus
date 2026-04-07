@@ -8,6 +8,7 @@ class TrendChart extends StatelessWidget {
   final List<String> labels;
   final Color color;
   final String suffix;
+  final double? baselineValue;
 
   const TrendChart({
     super.key,
@@ -16,6 +17,7 @@ class TrendChart extends StatelessWidget {
     required this.labels,
     this.color = AppColors.success,
     this.suffix = '',
+    this.baselineValue,
   });
 
   @override
@@ -127,6 +129,22 @@ class TrendChart extends StatelessWidget {
                     ),
                   ),
                 ],
+                extraLinesData: baselineValue != null
+                    ? ExtraLinesData(horizontalLines: [
+                        HorizontalLine(
+                          y: baselineValue!,
+                          color: AppColors.textTertiary.withValues(alpha: 0.5),
+                          strokeWidth: 1,
+                          dashArray: [4, 4],
+                          label: HorizontalLineLabel(
+                            show: true,
+                            alignment: Alignment.topRight,
+                            style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                            labelResolver: (_) => 'avg',
+                          ),
+                        ),
+                      ])
+                    : null,
                 lineTouchData: const LineTouchData(enabled: false),
               ),
             ),

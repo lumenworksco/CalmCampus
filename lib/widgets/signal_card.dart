@@ -4,8 +4,9 @@ import '../theme/app_colors.dart';
 
 class SignalCard extends StatelessWidget {
   final BehavioralSignal signal;
+  final String? baselineComparison;
 
-  const SignalCard({super.key, required this.signal});
+  const SignalCard({super.key, required this.signal, this.baselineComparison});
 
   static const _iconConfig = <String, (String, Color)>{
     'steps': ('🚶', AppColors.successLight),
@@ -108,13 +109,26 @@ class SignalCard extends StatelessWidget {
             ),
           ),
           // Trend
-          Text(
-            trendLabel,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: trendColor,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                trendLabel,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: trendColor,
+                ),
+              ),
+              if (baselineComparison != null)
+                Text(
+                  baselineComparison!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+            ],
           ),
         ],
       ),

@@ -13,42 +13,49 @@ class WellnessGauge extends StatelessWidget {
     final color = AppColors.getWellnessColor(score);
     final label = AppColors.getWellnessLabel(score);
 
-    return Column(
-      children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: CustomPaint(
-            painter: _GaugePainter(score: score, color: color),
-            child: Center(
-              child: Text(
-                '$score',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                  letterSpacing: -1,
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: score.toDouble()),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, animatedScore, child) {
+        return Column(
+          children: [
+            SizedBox(
+              width: size,
+              height: size,
+              child: CustomPaint(
+                painter: _GaugePainter(score: animatedScore, color: color),
+                child: Center(
+                  child: Text(
+                    '${animatedScore.toInt()}',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      letterSpacing: -1,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
+            const SizedBox(height: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _GaugePainter extends CustomPainter {
-  final int score;
+  final double score;
   final Color color;
 
   _GaugePainter({required this.score, required this.color});

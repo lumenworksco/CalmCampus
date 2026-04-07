@@ -17,10 +17,10 @@ class TabScaffold extends StatelessWidget {
         backgroundColor: CupertinoColors.systemBackground.withValues(alpha: 0.92),
         border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
         items: const [
-          BottomNavigationBarItem(icon: Text('🏠', style: TextStyle(fontSize: 20)), label: 'Home'),
-          BottomNavigationBarItem(icon: Text('📊', style: TextStyle(fontSize: 20)), label: 'Insights'),
-          BottomNavigationBarItem(icon: Text('🌿', style: TextStyle(fontSize: 20)), label: 'Calm'),
-          BottomNavigationBarItem(icon: Text('👤', style: TextStyle(fontSize: 20)), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.house_fill), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.chart_bar_fill), label: 'Insights'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.leaf_arrow_circlepath), label: 'Calm'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.person_fill), label: 'Profile'),
         ],
       ),
       tabBuilder: (context, index) {

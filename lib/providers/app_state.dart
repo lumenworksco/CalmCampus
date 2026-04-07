@@ -22,8 +22,10 @@ class AppState extends ChangeNotifier {
     await prefs.setBool('hasOnboarded', value);
   }
 
-  void setNotificationsEnabled(bool value) {
+  Future<void> setNotificationsEnabled(bool value) async {
     _notificationsEnabled = value;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notificationsEnabled', value);
   }
 }

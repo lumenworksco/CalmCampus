@@ -84,6 +84,9 @@ DailyData _generateDay(DateTime date) {
   );
 }
 
+/// Public wrapper to generate synthetic data for an arbitrary date.
+DailyData generateForDate(DateTime date) => _generateDay(date);
+
 List<DailyData> getWeeklyData({int days = 7}) {
   final now = DateTime.now();
   return List.generate(days, (i) {
@@ -173,25 +176,34 @@ String getWeeklyInsight() {
   return 'Your wellness has been ${today.wellnessScore >= 70 ? 'steady' : 'variable'} this week. ${bestDay.dayLabel} was your strongest day.';
 }
 
-/// Enhanced today data that factors in real pedometer steps.
+/// Enhanced today data that factors in real pedometer steps and mood rating.
 /// If [realSteps] is provided, it adjusts the wellness score accordingly.
-DailyData getEnhancedTodayData({int? realSteps}) {
+/// If [moodRating] is provided (1-5), it further adjusts the wellness score.
+DailyData getEnhancedTodayData({int? realSteps, int? moodRating}) {
   final base = getTodayData();
+  int adjustedScore = base.wellnessScore;
 
-  if (realSteps == null) {
-    return base;
+  // Step bonus
+  if (realSteps != null) {
+    int stepBonus;
+    if (realSteps >= 8000) {
+      stepBonus = 5;
+    } else if (realSteps >= 5000) {
+      stepBonus = 3;
+    } else if (realSteps >= 2000) {
+      stepBonus = 1;
+    } else {
+      stepBonus = -3;
+    }
+    adjustedScore += stepBonus;
   }
 
-  int stepBonus;
-  if (realSteps >= 8000) {
-    stepBonus = 5;
-  } else if (realSteps >= 5000) {
-    stepBonus = 3;
-  } else if (realSteps >= 2000) {
-    stepBonus = 1;
-  } else {
-    stepBonus = -3;
+  // Mood adjustment
+  if (moodRating != null) {
+    adjustedScore += _moodAdjustment(moodRating);
   }
+
+  adjustedScore = _clamp(adjustedScore.toDouble(), 10, 98).round();
 
   return DailyData(
     date: base.date,
@@ -201,14 +213,40 @@ DailyData getEnhancedTodayData({int? realSteps}) {
     screenTimeHours: base.screenTimeHours,
     typingSpeed: base.typingSpeed,
     appSwitches: base.appSwitches,
-    wellnessScore: _clamp((base.wellnessScore + stepBonus).toDouble(), 10, 98).round(),
+    wellnessScore: adjustedScore,
+    moodRating: moodRating,
+    realSteps: realSteps,
   );
+}
+
+/// Returns a wellness score adjustment based on mood rating (1-5).
+/// Mood 1 = -8, Mood 2 = -5, Mood 3 = 0, Mood 4 = +3, Mood 5 = +5
+int _moodAdjustment(int moodRating) {
+  switch (moodRating) {
+    case 1:
+      return -8;
+    case 2:
+      return -5;
+    case 3:
+      return 0;
+    case 4:
+      return 3;
+    case 5:
+      return 5;
+    default:
+      return 0;
+  }
 }
 
 /// Detect anomalies by comparing today's data against the 7-day rolling average.
 /// Returns a list of anomaly/warning objects for display in the UI.
-List<WellnessAnomaly> detectAnomalies() {
-  final week = getWeeklyData();
+///
+/// If [history] is provided, it will be used for computing averages instead of
+/// regenerating synthetic data. The last entry in [history] is treated as today.
+/// If [history] is null, falls back to existing behavior using [getWeeklyData].
+List<WellnessAnomaly> detectAnomalies({List<DailyData>? history}) {
+  final week = history ?? getWeeklyData();
+  if (week.isEmpty) return [];
   final today = week.last;
   final anomalies = <WellnessAnomaly>[];
 
@@ -301,6 +339,19 @@ List<WellnessAnomaly> detectAnomalies() {
     }
   }
 
+  // Low mood warning
+  if (today.moodRating != null && today.moodRating! <= 2) {
+    anomalies.add(WellnessAnomaly(
+      id: 'mood-low',
+      type: AnomalyType.warning,
+      title: 'Low mood reported',
+      message:
+          'You rated your mood ${today.moodRating}/5. Consider a breathing exercise or reaching out to someone.',
+      metric: 'mood',
+      severity: today.moodRating == 1 ? AnomalySeverity.high : AnomalySeverity.medium,
+    ));
+  }
+
   // Focus score dropping (today vs average)
   final todayFocus = 100 - (today.appSwitches / 40) * 100;
   if (avgFocus - todayFocus > 15) {
@@ -320,26 +371,31 @@ List<WellnessAnomaly> detectAnomalies() {
 
 /// Generate a smart insight that references step data, anomalies, and weekly trends.
 /// Replaces [getWeeklyInsight] with richer, more contextual output.
-String getSmartInsight({int? realSteps}) {
-  final week = getWeeklyData();
+///
+/// If [history] is provided, it will be used instead of regenerating synthetic data.
+/// The last entry in [history] is treated as today.
+String getSmartInsight({int? realSteps, List<DailyData>? history}) {
+  final week = history ?? getWeeklyData();
+  if (week.isEmpty) return 'No data available yet.';
   final today = week.last;
   final avgSleep = week.map((d) => d.sleepHours).reduce((a, b) => a + b) / week.length;
   final avgScreen = week.map((d) => d.screenTimeHours).reduce((a, b) => a + b) / week.length;
   final worstDay = week.reduce((a, b) => a.wellnessScore < b.wellnessScore ? a : b);
   final bestDay = week.reduce((a, b) => a.wellnessScore > b.wellnessScore ? a : b);
   final scoreTrend = today.wellnessScore - week.first.wellnessScore;
-  final anomalies = detectAnomalies();
+  final anomalies = detectAnomalies(history: history);
   final warningCount = anomalies.where((a) => a.type == AnomalyType.warning).length;
 
   // Step-based context
+  final steps = realSteps ?? today.realSteps;
   var stepContext = '';
-  if (realSteps != null) {
-    final formatted = _formatNumber(realSteps);
-    if (realSteps >= 8000) {
+  if (steps != null) {
+    final formatted = _formatNumber(steps);
+    if (steps >= 8000) {
       stepContext = " You've walked $formatted steps today — excellent activity level.";
-    } else if (realSteps >= 5000) {
+    } else if (steps >= 5000) {
       stepContext = " With $formatted steps so far, you're moderately active. Try to reach 8,000.";
-    } else if (realSteps >= 2000) {
+    } else if (steps >= 2000) {
       stepContext =
           " You're at $formatted steps — a short walk could boost your mood and focus.";
     } else {
@@ -348,40 +404,50 @@ String getSmartInsight({int? realSteps}) {
     }
   }
 
+  // Mood-based context
+  var moodContext = '';
+  if (today.moodRating != null) {
+    if (today.moodRating! <= 2) {
+      moodContext = ' Your self-reported mood is low — be gentle with yourself today.';
+    } else if (today.moodRating! >= 4) {
+      moodContext = ' Great to see your mood is positive today.';
+    }
+  }
+
   // Priority-ordered insight selection
   if (warningCount >= 2) {
     final metrics =
         anomalies.where((a) => a.type == AnomalyType.warning).map((a) => a.metric).join(', ');
-    return 'Multiple areas need attention today: $metrics. Small improvements in any one area can lift your overall wellbeing.$stepContext';
+    return 'Multiple areas need attention today: $metrics. Small improvements in any one area can lift your overall wellbeing.$moodContext$stepContext';
   }
   if (today.sleepHours < 6) {
-    return 'You slept only ${today.sleepHours}h last night. Sleep deprivation compounds — even one recovery night helps. Consider winding down earlier tonight.$stepContext';
+    return 'You slept only ${today.sleepHours}h last night. Sleep deprivation compounds — even one recovery night helps. Consider winding down earlier tonight.$moodContext$stepContext';
   }
   if (today.screenTimeHours > 6) {
-    return 'Screen time is elevated at ${today.screenTimeHours}h today. Try the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds.$stepContext';
+    return 'Screen time is elevated at ${today.screenTimeHours}h today. Try the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds.$moodContext$stepContext';
   }
   if (today.wellnessScore < 50) {
-    return 'Your wellness score is ${today.wellnessScore} today. ${worstDay.dayLabel} was your toughest day this week at ${worstDay.wellnessScore}. Focus on one improvement — sleep or screen time — to recover.$stepContext';
+    return 'Your wellness score is ${today.wellnessScore} today. ${worstDay.dayLabel} was your toughest day this week at ${worstDay.wellnessScore}. Focus on one improvement — sleep or screen time — to recover.$moodContext$stepContext';
   }
   if (avgSleep < 6.5) {
-    return 'Your average sleep this week is ${_round1(avgSleep)}h — below the recommended 7-9h. Sleep is the strongest predictor of next-day wellbeing in students.$stepContext';
+    return 'Your average sleep this week is ${_round1(avgSleep)}h — below the recommended 7-9h. Sleep is the strongest predictor of next-day wellbeing in students.$moodContext$stepContext';
   }
   if (scoreTrend > 10) {
-    return 'Your wellness trend is improving (+$scoreTrend points since ${week.first.dayLabel}). Keep maintaining your current routine — consistency is key.$stepContext';
+    return 'Your wellness trend is improving (+$scoreTrend points since ${week.first.dayLabel}). Keep maintaining your current routine — consistency is key.$moodContext$stepContext';
   }
   if (avgScreen > 5.5) {
-    return 'Average screen time is ${_round1(avgScreen)}h this week. Consider setting app timers for your most-used apps to stay mindful of usage.$stepContext';
+    return 'Average screen time is ${_round1(avgScreen)}h this week. Consider setting app timers for your most-used apps to stay mindful of usage.$moodContext$stepContext';
   }
   if (anomalies.any((a) => a.type == AnomalyType.positive)) {
-    return 'Great progress — your wellness has been improving steadily. ${bestDay.dayLabel} was your best day at ${bestDay.wellnessScore}. Keep up the momentum.$stepContext';
+    return 'Great progress — your wellness has been improving steadily. ${bestDay.dayLabel} was your best day at ${bestDay.wellnessScore}. Keep up the momentum.$moodContext$stepContext';
   }
-  return 'Your wellness has been ${today.wellnessScore >= 70 ? 'steady' : 'variable'} this week. ${bestDay.dayLabel} was your strongest day at ${bestDay.wellnessScore}. Keep prioritizing sleep and breaks.$stepContext';
+  return 'Your wellness has been ${today.wellnessScore >= 70 ? 'steady' : 'variable'} this week. ${bestDay.dayLabel} was your strongest day at ${bestDay.wellnessScore}. Keep prioritizing sleep and breaks.$moodContext$stepContext';
 }
 
 String _formatNumber(int n) {
   if (n < 1000) return n.toString();
   final thousands = n ~/ 1000;
   final remainder = n % 1000;
-  if (remainder == 0) return '${thousands},000';
+  if (remainder == 0) return '$thousands,000';
   return '$thousands,${remainder.toString().padLeft(3, '0')}';
 }
