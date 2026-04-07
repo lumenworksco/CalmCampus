@@ -151,27 +151,29 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
           // -- Emergency button --
           if (hasEmergency)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: CupertinoButton(
-                  color: AppColors.danger,
-                  borderRadius: BorderRadius.circular(12),
-                  padding: EdgeInsets.zero,
-                  onPressed: _showEmergencySheet,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: _showEmergencySheet,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.dangerLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(CupertinoIcons.phone_fill,
-                          size: 18, color: CupertinoColors.white),
+                          size: 16, color: AppColors.danger),
                       SizedBox(width: 8),
                       Text(
                         'I Need Help Now',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: CupertinoColors.white,
+                          color: AppColors.danger,
                         ),
                       ),
                     ],
@@ -184,7 +186,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
           _sectionHeader('BREATHING'),
           _card(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Segmented control for pattern
                 SizedBox(
@@ -198,18 +200,22 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                       for (int i = 0; i < _patterns.length; i++)
                         i: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 8),
+                              horizontal: 12, vertical: 8),
                           child: Text(
                             _patterns[i].name,
-                            style: const TextStyle(fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                           ),
                         ),
                     },
                   ),
                 ),
-                BreathingExercise(pattern: _patterns[_selectedPatternIndex]),
+                const SizedBox(height: 4),
+                Text(
+                  _patterns[_selectedPatternIndex].description,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  textAlign: TextAlign.center,
+                ),
+                Center(child: BreathingExercise(pattern: _patterns[_selectedPatternIndex])),
               ],
             ),
           ),

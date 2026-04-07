@@ -26,7 +26,7 @@ class BreathingPattern {
   int get totalDuration => phases.fold(0, (sum, p) => sum + p.durationSeconds);
 
   static const boxBreathing = BreathingPattern(
-    name: 'Box Breathing',
+    name: 'Box',
     description: 'Equal timing promotes balance and calm focus',
     phases: [
       BreathingPhase(label: 'Breathe In', durationSeconds: 4, isExpand: true),
@@ -37,7 +37,7 @@ class BreathingPattern {
   );
 
   static const relaxation478 = BreathingPattern(
-    name: '4-7-8 Relaxation',
+    name: '4-7-8',
     description: 'Clinically validated for anxiety reduction',
     phases: [
       BreathingPhase(label: 'Breathe In', durationSeconds: 4, isExpand: true),
@@ -47,7 +47,7 @@ class BreathingPattern {
   );
 
   static const physiologicalSigh = BreathingPattern(
-    name: 'Physiological Sigh',
+    name: 'Sigh',
     description: 'Fastest way to calm your nervous system in real-time',
     phases: [
       BreathingPhase(label: 'Inhale', durationSeconds: 2, isExpand: true),

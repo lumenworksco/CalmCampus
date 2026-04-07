@@ -176,6 +176,7 @@ class _BreathingExerciseState extends State<BreathingExercise>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
             onTap: () {
