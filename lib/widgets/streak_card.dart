@@ -9,95 +9,80 @@ class StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.border.withValues(alpha: 0.6),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
-          // Streak icon in colored circle
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: streakDays > 0
-                  ? AppColors.warningLight
-                  : AppColors.borderLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              streakDays > 0 ? '\u{1F525}' : '\u{2B50}',
-              style: const TextStyle(fontSize: 22),
-            ),
+          // Compact streak icon
+          Text(
+            streakDays > 0 ? '\u{1F525}' : '\u{2B50}',
+            style: const TextStyle(fontSize: 24),
           ),
           const SizedBox(width: 12),
 
           // Text content
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (streakDays > 0) ...[
-                  Text(
-                    '$streakDays day streak',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+            child: streakDays > 0
+                ? RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.text,
+                        letterSpacing: -0.2,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '$streakDays day streak',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const TextSpan(
+                          text: '  '),
+                        const TextSpan(
+                          text: 'Wellness above 70',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Wellness above 70',
+                  )
+                : const Text(
+                    'Keep wellness above 70 to start a streak',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: AppColors.textSecondary,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                ] else ...[
-                  const Text(
-                    'Start your streak!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Keep wellness above 70 daily',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ],
-            ),
           ),
 
-          // Badge for 7+ days
+          // Badge for milestones
           if (streakDays >= 7)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.successLight,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(100),
               ),
-              child: const Text(
-                'Amazing!',
-                style: TextStyle(
+              child: Text(
+                streakDays >= 30
+                    ? 'Incredible'
+                    : streakDays >= 14
+                        ? 'On fire'
+                        : 'Amazing',
+                style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.1,
                   color: AppColors.primaryDark,
                 ),
               ),

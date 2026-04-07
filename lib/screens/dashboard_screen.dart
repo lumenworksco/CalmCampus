@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -43,17 +44,6 @@ class DashboardScreen extends StatelessWidget {
     }
   }
 
-  Color _anomalyBackgroundColor(AnomalyType type) {
-    switch (type) {
-      case AnomalyType.warning:
-        return AppColors.warningLight;
-      case AnomalyType.positive:
-        return AppColors.successLight;
-      case AnomalyType.info:
-        return AppColors.accentLight;
-    }
-  }
-
   String _anomalyEmoji(AnomalyType type) {
     switch (type) {
       case AnomalyType.warning:
@@ -84,9 +74,10 @@ class DashboardScreen extends StatelessWidget {
     final streak = repo.getStreak();
     final hasCheckin = repo.hasCheckinToday();
 
-    // Filter to warnings and positives for banner display
-    final displayAnomalies =
-        anomalies.where((a) => a.type == AnomalyType.warning || a.type == AnomalyType.positive).toList();
+    final displayAnomalies = anomalies
+        .where((a) =>
+            a.type == AnomalyType.warning || a.type == AnomalyType.positive)
+        .toList();
 
     final allSignals = <BehavioralSignal>[
       if (pedometer.isAvailable)
@@ -107,222 +98,271 @@ class DashboardScreen extends StatelessWidget {
       ...signals,
     ];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        repo.refresh();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _greeting(),
-                    style: const TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('EEEE, MMMM d').format(DateTime.now()),
-                    style: const TextStyle(fontSize: 15, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-
-            // Streak card
-            if (streak > 0)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: StreakCard(streakDays: streak),
-              ),
-
-            // Check-in prompt or checked-in display
-            _buildCheckinSection(context, repo, hasCheckin, todayData.moodRating, todayData.energyRating),
-
-            // Wellness Card with demo mode long-press
-            Stack(
+    return CupertinoScrollbar(
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onLongPress: () => repo.toggleDemoMode(),
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 2),
+                // -- Header --
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _greeting(),
+                        style: const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text,
+                          letterSpacing: 0.4,
                         ),
-                      ],
-                    ),
-                    child: WellnessGauge(score: todayData.wellnessScore),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                // Demo badge
-                if (repo.demoMode)
-                  Positioned(
-                    top: 24,
-                    right: 28,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'DEMO',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 1,
+
+                // -- Streak card --
+                if (streak > 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: StreakCard(streakDays: streak),
+                  ),
+
+                // -- Check-in section --
+                _buildCheckinSection(
+                  context,
+                  repo,
+                  hasCheckin,
+                  todayData.moodRating,
+                  todayData.energyRating,
+                ),
+
+                // -- Wellness gauge with demo toggle --
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onLongPress: () => repo.toggleDemoMode(),
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 28, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                         ),
+                        child: WellnessGauge(score: todayData.wellnessScore),
                       ),
                     ),
-                  ),
-              ],
-            ),
-
-            // Crisis banner (when score < 35)
-            if (todayData.wellnessScore < 35) ...[
-              const SizedBox(height: 16),
-              CrisisBanner(
-                onTalkToSomeone: _launchPhone,
-                onViewResources: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Campus wellness resources coming soon.'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-              ),
-            ],
-
-            // Anomaly banners
-            if (displayAnomalies.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              for (final anomaly in displayAnomalies)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  decoration: BoxDecoration(
-                    color: _anomalyBackgroundColor(anomaly.type),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border(
-                      left: BorderSide(
-                        color: _anomalyBorderColor(anomaly.type),
-                        width: 4,
-                      ),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_anomalyEmoji(anomaly.type), style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                anomaly.title,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.text,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                anomaly.message,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                  height: 1.3,
-                                ),
+                    // Demo dot indicator
+                    if (repo.demoMode)
+                      Positioned(
+                        top: 26,
+                        right: 30,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: AppColors.warning,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppColors.warning.withValues(alpha: 0.4),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
+                  ],
+                ),
+
+                // -- Crisis banner --
+                if (todayData.wellnessScore < 35) ...[
+                  const SizedBox(height: 16),
+                  CrisisBanner(
+                    onTalkToSomeone: _launchPhone,
+                    onViewResources: () {
+                      showCupertinoDialog(
+                        context: context,
+                        builder: (ctx) => CupertinoAlertDialog(
+                          title: const Text('Campus Resources'),
+                          content: const Text(
+                            'Campus wellness resources coming soon.',
+                          ),
+                          actions: [
+                            CupertinoDialogAction(
+                              isDefaultAction: true,
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+
+                // -- Anomaly banners --
+                if (displayAnomalies.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  for (final anomaly in displayAnomalies)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border(
+                          left: BorderSide(
+                            color: _anomalyBorderColor(anomaly.type),
+                            width: 3,
+                          ),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _anomalyEmoji(anomaly.type),
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    anomaly.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.text,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    anomaly.message,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textSecondary,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+
+                // -- Signals header --
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
+                  child: Text(
+                    "Today's Signals",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text,
                     ),
                   ),
                 ),
-            ],
 
-            // Signals
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
-              child: Text(
-                "Today's Signals",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.text,
-                ),
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  for (int i = 0; i < allSignals.length; i++) ...[
-                    SignalCard(signal: allSignals[i]),
-                    if (i < allSignals.length - 1)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 68),
-                        child: Divider(height: 0.5, thickness: 0.5, color: AppColors.border),
+                // -- Signals grouped card --
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 1),
                       ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Privacy footer
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('\u{1F512}', style: TextStyle(fontSize: 13)),
-                  SizedBox(width: 6),
-                  Text(
-                    'All data stays on your device',
-                    style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+                    ],
                   ),
-                ],
-              ),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < allSignals.length; i++) ...[
+                        SignalCard(signal: allSignals[i]),
+                        if (i < allSignals.length - 1)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 68),
+                            child: Divider(
+                              height: 0.5,
+                              thickness: 0.5,
+                              color: AppColors.border,
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // -- Privacy footer --
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 28),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.lock_fill,
+                        size: 13,
+                        color: AppColors.textTertiary,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'All data stays on your device',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom padding to account for tab bar
+                const SizedBox(height: 100),
+              ],
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -335,7 +375,6 @@ class DashboardScreen extends StatelessWidget {
     int? energyRating,
   ) {
     if (hasCheckin && moodRating != null) {
-      // Already checked in -- show inline display
       final emoji = _moodEmojis[moodRating] ?? '\u{1F610}';
       final moodLabel = switch (moodRating) {
         1 => 'Awful',
@@ -359,12 +398,12 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -390,6 +429,7 @@ class DashboardScreen extends StatelessWidget {
                       energyLabel,
                       style: const TextStyle(
                         fontSize: 13,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -397,69 +437,66 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+            const Icon(
+              CupertinoIcons.checkmark_circle_fill,
+              color: AppColors.success,
+              size: 20,
+            ),
           ],
         ),
       );
     }
 
-    // Not yet checked in -- show prompt card
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
+    // Not yet checked in -- subtle prompt
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: () => _showCheckinSheet(context, repo),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'How are you feeling today?',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppColors.text,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _moodEmojis.entries.map((entry) {
-              return GestureDetector(
-                onTap: () => _showCheckinSheet(context, repo),
-                child: Text(entry.value, style: const TextStyle(fontSize: 28)),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: () => _showCheckinSheet(context, repo),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              // Emoji faces row
+              ...(_moodEmojis.values.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(e, style: const TextStyle(fontSize: 22)),
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              )),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Check in',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.white,
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
-              child: const Text('Check in'),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

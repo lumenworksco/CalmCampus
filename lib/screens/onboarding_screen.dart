@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -18,17 +19,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     (
       '\u{1F9E0}',
       'Welcome to\nCalmCampus',
-      'Your privacy-first companion for student wellbeing. Detect early signs of stress before burnout strikes.'
+      'Your privacy-first companion for student wellbeing. '
+          'Detect early signs of stress before burnout strikes.'
     ),
     (
       '\u{1F512}',
       'Your Data\nStays Yours',
-      'All behavioral analysis happens on your device. Nothing is ever sent to a server. GDPR-compliant by design.'
+      'All behavioral analysis happens on your device. '
+          'Nothing is ever sent to a server. GDPR-compliant by design.'
     ),
     (
       '\u{1F33F}',
       'Gentle\nInterventions',
-      'Evidence-based techniques \u2014 breathing exercises, mindfulness, and campus resources when you need them.'
+      'Evidence-based techniques \u2014 breathing exercises, mindfulness, '
+          'and campus resources when you need them.'
     ),
   ];
 
@@ -55,7 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context.read<AppState>().setHasOnboarded(true);
     } else {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     }
@@ -71,7 +75,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Page content
+            // -- Skip button row --
+            if (!isLast)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 8, 0),
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    onPressed: () =>
+                        context.read<AppState>().setHasOnboarded(true),
+                    child: const Text(
+                      'Skip',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              const SizedBox(height: 52),
+
+            // -- Page content --
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -83,18 +114,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Larger, more prominent emoji circle
                         Container(
-                          width: 88,
-                          height: 88,
-                          decoration: const BoxDecoration(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.background,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 20,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
-                          child: Text(slide.$1,
-                              style: const TextStyle(fontSize: 40)),
+                          child: Text(
+                            slide.$1,
+                            style: const TextStyle(fontSize: 52),
+                          ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 44),
                         Text(
                           slide.$2,
                           textAlign: TextAlign.center,
@@ -102,18 +143,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             fontSize: 34,
                             fontWeight: FontWeight.w700,
                             color: AppColors.text,
-                            height: 1.2,
+                            height: 1.15,
                             letterSpacing: 0.4,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         Text(
                           slide.$3,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 17,
                             color: AppColors.textSecondary,
-                            height: 1.4,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -122,23 +163,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-            // Bottom navigation
+
+            // -- Bottom controls --
             Padding(
-              padding: const EdgeInsets.fromLTRB(44, 0, 44, 50),
+              padding: const EdgeInsets.fromLTRB(44, 0, 44, 56),
               child: Column(
                 children: [
-                  // Animated dot indicator
+                  // Animated dot indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_slides.length, (i) {
-                      // Calculate how "active" this dot is based on the page position
                       final distance = (_currentPage - i).abs();
                       final isActive = distance < 0.5;
-                      final widthFactor =
-                          (1 - distance.clamp(0.0, 1.0));
+                      final widthFactor = (1 - distance.clamp(0.0, 1.0));
 
                       return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
                         width: 8 + (16 * widthFactor),
                         height: 8,
                         margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -151,43 +192,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     }),
                   ),
-                  const SizedBox(height: 28),
-                  // Continue / Get Started button
+                  const SizedBox(height: 36),
+
+                  // Full-width CupertinoButton.filled
                   SizedBox(
                     width: double.infinity,
-                    child: TextButton(
+                    child: CupertinoButton.filled(
+                      borderRadius: BorderRadius.circular(14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       onPressed: _next,
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        textStyle: const TextStyle(
+                      child: Text(
+                        isLast ? 'Get Started' : 'Continue',
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: Text(isLast ? 'Get Started' : 'Continue'),
                     ),
                   ),
-                  if (!isLast) ...[
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () =>
-                          context.read<AppState>().setHasOnboarded(true),
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(
-                          color: AppColors.accent,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

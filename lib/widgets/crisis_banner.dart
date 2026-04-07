@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
@@ -11,52 +12,43 @@ class CrisisBanner extends StatelessWidget {
     this.onViewResources,
   });
 
-  // Warm, empathetic palette — soft coral/peach, not alarming red
-  static const _warmBg = Color(0xFFFFF0EB);
-  static const _warmAccent = Color(0xFFE8725C);
-  static const _warmAccentLight = Color(0xFFFADDD6);
+  // Refined warm palette -- soft, caring, not clinical
+  static const _warmBg = Color(0xFFFFF5F1);
+  static const _warmAccent = Color(0xFFDE6B56);
+  static const _warmAccentSoft = Color(0xFFF5D4CB);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _warmBg,
-            Color(0xFFFFF6F2),
-          ],
-        ),
+        color: _warmBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _warmAccent.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(
+          color: _warmAccentSoft,
+          width: 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon
+          // Intentional icon -- warm hand, not childish
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: _warmAccentLight,
+              color: _warmAccentSoft.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
-            child: const Text(
-              '\u{1F932}', // cupped hands emoji
-              style: TextStyle(fontSize: 20),
+            child: const Icon(
+              CupertinoIcons.heart_fill,
+              size: 22,
+              color: _warmAccent,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Title
           const Text(
@@ -64,67 +56,68 @@ class CrisisBanner extends StatelessWidget {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
               color: AppColors.text,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
 
-          // Message
+          // Message -- caring tone
           const Text(
-            "We noticed your wellbeing has been low. You don't have to face this alone.",
+            "We noticed your wellbeing has been low lately. "
+            "You don't have to face this alone.",
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: AppColors.textSecondary,
-              height: 1.4,
+              height: 1.45,
+              letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // Buttons — stacked vertically
+          // Primary action -- Cupertino filled button
           SizedBox(
             width: double.infinity,
-            child: TextButton(
+            child: CupertinoButton(
               onPressed: onTalkToSomeone,
-              style: TextButton.styleFrom(
-                backgroundColor: _warmAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              color: _warmAccent,
+              borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.phone_outlined, size: 18),
+                  Icon(CupertinoIcons.phone, size: 18, color: Colors.white),
                   SizedBox(width: 8),
-                  Text('Talk to someone'),
+                  Text(
+                    'Talk to someone',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+
+          // Secondary action -- subtle Cupertino style
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
+            child: CupertinoButton(
               onPressed: onViewResources,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _warmAccent,
-                side: const BorderSide(color: _warmAccent, width: 1.5),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                textStyle: const TextStyle(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: const Text(
+                'View resources',
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                  color: _warmAccent,
                 ),
               ),
-              child: const Text('View resources'),
             ),
           ),
         ],

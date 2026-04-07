@@ -22,7 +22,7 @@ class MoodPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: _moods.entries.map((entry) {
         final mood = entry.key;
         final emoji = entry.value.$1;
@@ -31,34 +31,50 @@ class MoodPicker extends StatelessWidget {
 
         return GestureDetector(
           onTap: () => onMoodSelected(mood),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.accent.withValues(alpha: 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: 64,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 28),
+                // Emoji with background circle indicator
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? AppColors.accent.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
+                  alignment: Alignment.center,
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.1 : 1.0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 36),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
+                const SizedBox(height: 6),
+
+                // Label below
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected
                         ? AppColors.accent
                         : AppColors.textSecondary,
+                    letterSpacing: -0.1,
                   ),
+                  child: Text(label),
                 ),
               ],
             ),
