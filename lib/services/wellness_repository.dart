@@ -6,13 +6,20 @@ import '../data/data_engine.dart' as data_engine;
 
 class WellnessRepository extends ChangeNotifier {
   static const _boxName = 'wellness_data';
-  late Box<Map> _box;
+  Box? _box;
   bool _demoMode = false;
+  bool _isInitialized = false;
 
   bool get demoMode => _demoMode;
+  bool get isInitialized => _isInitialized;
 
   Future<void> init() async {
-    _box = await Hive.openBox<Map>(_boxName);
+    try {
+      _box = await Hive.openBox(_boxName);
+      _isInitialized = true;
+    } catch (_) {
+      _isInitialized = false;
+    }
   }
 
   /// Toggle demo mode (overrides today's score to 28).
@@ -24,10 +31,10 @@ class WellnessRepository extends ChangeNotifier {
   /// Get today's data, generating and persisting synthetic data on first access.
   DailyData getTodayData({int? realSteps}) {
     final dateStr = _todayStr();
-    final stored = _box.get(dateStr);
+    final stored = _box?.get(dateStr);
 
     if (stored != null) {
-      var data = DailyData.fromMap(Map<String, dynamic>.from(stored));
+      var data = DailyData.fromMap(Map<String, dynamic>.from(stored as Map));
       if (realSteps != null) {
         data = data.copyWith(realSteps: realSteps);
       }
@@ -39,7 +46,7 @@ class WellnessRepository extends ChangeNotifier {
 
     // First access: generate synthetic data and persist
     var data = data_engine.getEnhancedTodayData(realSteps: realSteps);
-    _box.put(dateStr, data.toMap());
+    _box?.put(dateStr, data.toMap());
     if (_demoMode) {
       data = data.copyWith(wellnessScore: 28);
     }
@@ -51,7 +58,7 @@ class WellnessRepository extends ChangeNotifier {
     final dateStr = _todayStr();
     var data = getTodayData();
     data = data.copyWith(moodRating: mood, energyRating: energy);
-    await _box.put(dateStr, data.toMap());
+    await _box?.put(dateStr, data.toMap());
     notifyListeners();
   }
 
@@ -60,22 +67,22 @@ class WellnessRepository extends ChangeNotifier {
     final dateStr = _todayStr();
     var data = getTodayData();
     data = data.copyWith(gratitudeEntry: entry);
-    await _box.put(dateStr, data.toMap());
+    await _box?.put(dateStr, data.toMap());
     notifyListeners();
   }
 
   /// Check if today has a check-in.
   bool hasCheckinToday() {
-    final stored = _box.get(_todayStr());
+    final stored = _box?.get(_todayStr());
     if (stored == null) return false;
-    return stored['moodRating'] != null;
+    return (stored as Map)['moodRating'] != null;
   }
 
   /// Get data for a specific date.
   DailyData? getDataForDate(String dateStr) {
-    final stored = _box.get(dateStr);
+    final stored = _box?.get(dateStr);
     if (stored == null) return null;
-    return DailyData.fromMap(Map<String, dynamic>.from(stored));
+    return DailyData.fromMap(Map<String, dynamic>.from(stored as Map));
   }
 
   /// Get last [days] days of data (generates missing days from synthetic engine).
@@ -85,13 +92,12 @@ class WellnessRepository extends ChangeNotifier {
     for (int i = days - 1; i >= 0; i--) {
       final d = now.subtract(Duration(days: i));
       final dateStr = _formatDate(d);
-      final stored = _box.get(dateStr);
+      final stored = _box?.get(dateStr);
       if (stored != null) {
-        result.add(DailyData.fromMap(Map<String, dynamic>.from(stored)));
+        result.add(DailyData.fromMap(Map<String, dynamic>.from(stored as Map)));
       } else {
-        // Generate and persist synthetic data for past days
         final synthetic = _generateForDate(d);
-        _box.put(dateStr, synthetic.toMap());
+        _box?.put(dateStr, synthetic.toMap());
         result.add(synthetic);
       }
     }
@@ -100,9 +106,9 @@ class WellnessRepository extends ChangeNotifier {
 
   /// Get today's gratitude entry.
   String? getTodayGratitude() {
-    final stored = _box.get(_todayStr());
+    final stored = _box?.get(_todayStr());
     if (stored == null) return null;
-    return stored['gratitudeEntry'] as String?;
+    return (stored as Map)['gratitudeEntry'] as String?;
   }
 
   /// Calculate streak (consecutive days with wellness > 70).
@@ -112,9 +118,9 @@ class WellnessRepository extends ChangeNotifier {
     for (int i = 0; i < 365; i++) {
       final d = now.subtract(Duration(days: i));
       final dateStr = _formatDate(d);
-      final stored = _box.get(dateStr);
+      final stored = _box?.get(dateStr);
       if (stored == null) break;
-      final data = DailyData.fromMap(Map<String, dynamic>.from(stored));
+      final data = DailyData.fromMap(Map<String, dynamic>.from(stored as Map));
       if (data.wellnessScore > 70) {
         streak++;
       } else {
@@ -131,7 +137,7 @@ class WellnessRepository extends ChangeNotifier {
 
   /// Clear all stored data.
   Future<void> clearAll() async {
-    await _box.clear();
+    await _box?.clear();
     notifyListeners();
   }
 

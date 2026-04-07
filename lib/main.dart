@@ -9,13 +9,22 @@ import 'services/wellness_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
+
+  try {
+    await Hive.initFlutter();
+  } catch (_) {
+    // Hive init can fail on some platforms; continue without persistence
+  }
 
   final appState = AppState();
   await appState.init();
 
   final repo = WellnessRepository();
-  await repo.init();
+  try {
+    await repo.init();
+  } catch (_) {
+    // Repository init failed; app will still work with synthetic data
+  }
 
   runApp(
     MultiProvider(
