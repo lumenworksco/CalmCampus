@@ -23,7 +23,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             // -- Large title header --
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 60, 20, 0),
+              padding: EdgeInsets.fromLTRB(16, 60, 16, 0),
               child: Text(
                 'Settings',
                 style: TextStyle(
@@ -83,7 +83,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     CupertinoSwitch(
                       value: appState.notificationsEnabled,
-                      activeTrackColor: AppColors.success,
+                      activeTrackColor: AppColors.primary,
                       onChanged: (v) => appState.setNotificationsEnabled(v),
                     ),
                   ],
@@ -136,7 +136,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Dialogs -- Cupertino style
+  // Dialogs
   // ---------------------------------------------------------------------------
 
   void _confirmResetOnboarding(BuildContext context, AppState appState) {
@@ -191,12 +191,12 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Reusable building blocks
+  // Building blocks -- iOS Settings style
   // ---------------------------------------------------------------------------
 
   Widget _sectionLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 8),
+      padding: const EdgeInsets.fromLTRB(32, 35, 16, 8),
       child: Text(
         text,
         style: const TextStyle(
@@ -211,36 +211,29 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _groupedCard(List<Widget> children) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(children: children),
     );
   }
 
   Widget _separator() {
-    return const Padding(
-      padding: EdgeInsets.only(left: 16),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
       child: Divider(
-        height: 0.5,
-        thickness: 0.5,
-        color: AppColors.border,
+        height: 0.33,
+        thickness: 0.33,
+        color: AppColors.separator,
       ),
     );
   }
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -272,7 +265,7 @@ class ProfileScreen extends StatelessWidget {
       onTap: onTap,
       child: Container(
         constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.vertical(
             top: isFirst ? const Radius.circular(12) : Radius.zero,
@@ -295,7 +288,7 @@ class ProfileScreen extends StatelessWidget {
             Icon(
               CupertinoIcons.chevron_right,
               size: 14,
-              color: AppColors.textTertiary.withValues(alpha: 0.6),
+              color: AppColors.textTertiary,
             ),
           ],
         ),
@@ -305,7 +298,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _footer(String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 0),
       child: Text(
         text,
         style: const TextStyle(

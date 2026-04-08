@@ -6,7 +6,7 @@ class WellnessGauge extends StatelessWidget {
   final int score;
   final double size;
 
-  const WellnessGauge({super.key, required this.score, this.size = 160});
+  const WellnessGauge({super.key, required this.score, this.size = 180});
 
   @override
   Widget build(BuildContext context) {
@@ -30,21 +30,21 @@ class WellnessGauge extends StatelessWidget {
                   child: Text(
                     '${animatedScore.toInt()}',
                     style: TextStyle(
-                      fontSize: 48,
+                      fontSize: 56,
                       fontWeight: FontWeight.w700,
                       color: color,
-                      letterSpacing: -1,
+                      letterSpacing: -2,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               label,
               style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -63,14 +63,14 @@ class _GaugePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const strokeWidth = 12.0;
+    const strokeWidth = 8.0;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // Background circle
+    // Background track -- very subtle, close to surface
     final bgPaint = Paint()
-      ..color = AppColors.borderLight
+      ..color = const Color(0xFFE8E8ED)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;

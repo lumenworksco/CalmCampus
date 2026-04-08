@@ -15,7 +15,7 @@ class TrendChart extends StatelessWidget {
     required this.title,
     required this.data,
     required this.labels,
-    this.color = AppColors.success,
+    this.color = AppColors.primary,
     this.suffix = '',
     this.baselineValue,
   });
@@ -27,18 +27,11 @@ class TrendChart extends StatelessWidget {
     final maxY = data.reduce((a, b) => a > b ? a : b) * 1.1;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,8 +51,9 @@ class TrendChart extends StatelessWidget {
                 '${currentValue.toStringAsFixed(currentValue == currentValue.roundToDouble() ? 0 : 1)}$suffix',
                 style: TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: color,
+                  letterSpacing: -0.4,
                 ),
               ),
             ],
@@ -76,21 +70,26 @@ class TrendChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: (maxY - minY) / 4,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.borderLight,
-                    strokeWidth: 0.5,
+                    color: AppColors.border.withValues(alpha: 0.5),
+                    strokeWidth: 0.33,
                   ),
                 ),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 22,
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
-                        if (idx < 0 || idx >= labels.length) return const SizedBox();
+                        if (idx < 0 || idx >= labels.length) {
+                          return const SizedBox();
+                        }
                         return Text(
                           labels[idx],
                           style: const TextStyle(
@@ -112,34 +111,32 @@ class TrendChart extends StatelessWidget {
                         .toList(),
                     isCurved: true,
                     color: color,
-                    barWidth: 2,
+                    barWidth: 1.5,
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, percent, bar, index) =>
                           FlDotCirclePainter(
-                        radius: 3,
+                        radius: 2,
                         color: Colors.white,
                         strokeWidth: 1.5,
                         strokeColor: color,
                       ),
                     ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: color.withValues(alpha: 0.08),
-                    ),
+                    belowBarData: BarAreaData(show: false),
                   ),
                 ],
                 extraLinesData: baselineValue != null
                     ? ExtraLinesData(horizontalLines: [
                         HorizontalLine(
                           y: baselineValue!,
-                          color: AppColors.textTertiary.withValues(alpha: 0.5),
-                          strokeWidth: 1,
+                          color: AppColors.textTertiary.withValues(alpha: 0.4),
+                          strokeWidth: 0.5,
                           dashArray: [4, 4],
                           label: HorizontalLineLabel(
                             show: true,
                             alignment: Alignment.topRight,
-                            style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                            style: const TextStyle(
+                                fontSize: 10, color: AppColors.textTertiary),
                             labelResolver: (_) => 'avg',
                           ),
                         ),

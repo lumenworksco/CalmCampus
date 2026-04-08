@@ -59,8 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context.read<AppState>().setHasOnboarded(true);
     } else {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
       );
     }
   }
@@ -75,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // -- Skip button row --
+            // -- Skip button --
             if (!isLast)
               Align(
                 alignment: Alignment.centerRight,
@@ -109,55 +109,57 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: _slides.length,
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 44),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Larger, more prominent emoji circle
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.background,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 20,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+
+                  // Subtle parallax effect
+                  final distance = (_currentPage - index).abs();
+                  final opacity = (1.0 - distance * 0.3).clamp(0.0, 1.0);
+
+                  return AnimatedOpacity(
+                    opacity: opacity,
+                    duration: const Duration(milliseconds: 200),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Large emoji -- 64pt on plain background
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.background,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              slide.$1,
+                              style: const TextStyle(fontSize: 64),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            slide.$1,
-                            style: const TextStyle(fontSize: 52),
+                          const SizedBox(height: 48),
+                          Text(
+                            slide.$2,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.text,
+                              height: 1.15,
+                              letterSpacing: 0.4,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 44),
-                        Text(
-                          slide.$2,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.text,
-                            height: 1.15,
-                            letterSpacing: 0.4,
+                          const SizedBox(height: 20),
+                          Text(
+                            slide.$3,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              color: AppColors.textSecondary,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          slide.$3,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            color: AppColors.textSecondary,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -166,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // -- Bottom controls --
             Padding(
-              padding: const EdgeInsets.fromLTRB(44, 0, 44, 56),
+              padding: const EdgeInsets.fromLTRB(40, 0, 40, 56),
               child: Column(
                 children: [
                   // Animated dot indicators
@@ -194,11 +196,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Full-width CupertinoButton.filled
+                  // Full-width button, 16px rounded corners
                   SizedBox(
                     width: double.infinity,
                     child: CupertinoButton.filled(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       onPressed: _next,
                       child: Text(

@@ -42,7 +42,7 @@ class InsightsScreen extends StatelessWidget {
           children: [
             // -- Large title header --
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 60, 20, 4),
+              padding: EdgeInsets.fromLTRB(16, 60, 16, 4),
               child: Text(
                 'Insights',
                 style: TextStyle(
@@ -54,56 +54,44 @@ class InsightsScreen extends StatelessWidget {
               ),
             ),
 
-            // -- iOS section label --
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 2, 20, 16),
+              padding: EdgeInsets.fromLTRB(16, 2, 16, 16),
               child: Text(
-                '7-DAY BEHAVIORAL TRENDS',
+                '7-day behavioral trends',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textSecondary,
-                  letterSpacing: 0.5,
                 ),
               ),
             ),
 
-            // -- AI Insight card (premium feel) --
+            // -- AI Insight card -- clean white, no gradient --
             Container(
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFF8F0FF),
-                    Color(0xFFF0F4FF),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFE8E0F0),
-                  width: 0.5,
-                ),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
-                      '\u2728',
-                      style: TextStyle(fontSize: 18),
+                    child: const Icon(
+                      CupertinoIcons.lightbulb,
+                      size: 16,
+                      color: AppColors.accent,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,11 +104,11 @@ class InsightsScreen extends StatelessWidget {
                             color: AppColors.text,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Text(
                           insight,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             color: AppColors.textSecondary,
                             height: 1.5,
                           ),
@@ -138,13 +126,13 @@ class InsightsScreen extends StatelessWidget {
               _buildMoodTrend(weeklyData, labels),
             ],
 
-            // -- Charts with generous spacing --
+            // -- Charts --
             const SizedBox(height: 8),
             TrendChart(
               title: 'Wellness Score',
               data: weeklyData.map((d) => d.wellnessScore.toDouble()).toList(),
               labels: labels,
-              color: AppColors.success,
+              color: AppColors.primary,
               baselineValue: baselineMetrics.avgWellness,
             ),
             const SizedBox(height: 4),
@@ -152,7 +140,7 @@ class InsightsScreen extends StatelessWidget {
               title: 'Sleep',
               data: weeklyData.map((d) => d.sleepHours).toList(),
               labels: labels,
-              color: AppColors.purple,
+              color: const Color(0xFF5856D6),
               suffix: 'h',
               baselineValue: baselineMetrics.avgSleep,
             ),
@@ -169,7 +157,8 @@ class InsightsScreen extends StatelessWidget {
             TrendChart(
               title: 'Focus Score',
               data: weeklyData
-                  .map((d) => (100 - (d.appSwitches / 40 * 100)).roundToDouble())
+                  .map((d) =>
+                      (100 - (d.appSwitches / 40 * 100)).roundToDouble())
                   .toList(),
               labels: labels,
               color: AppColors.accent,
@@ -177,7 +166,7 @@ class InsightsScreen extends StatelessWidget {
               baselineValue: baselineMetrics.avgFocus,
             ),
 
-            // -- Bottom padding for tab bar --
+            // Bottom padding for tab bar
             const SizedBox(height: 100),
           ],
         ),
@@ -187,18 +176,11 @@ class InsightsScreen extends StatelessWidget {
 
   Widget _buildMoodTrend(List weeklyData, List<String> labels) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +210,7 @@ class InsightsScreen extends StatelessWidget {
                       label,
                       style: const TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textTertiary,
                       ),
                     ),
@@ -244,10 +226,10 @@ class InsightsScreen extends StatelessWidget {
                         height: 24,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.borderLight,
+                          color: AppColors.background,
                           border: Border.all(
                             color: AppColors.border,
-                            width: 0.5,
+                            width: 0.33,
                           ),
                         ),
                       ),

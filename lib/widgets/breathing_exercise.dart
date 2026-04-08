@@ -66,14 +66,12 @@ class _BreathingExerciseState extends State<BreathingExercise>
         ));
         lastWasExpand = true;
       } else if (phase.isHold) {
-        // Hold at whatever scale we ended on
         final holdValue = lastWasExpand ? 1.0 : 0.6;
         items.add(TweenSequenceItem(
           tween: ConstantTween(holdValue),
           weight: weight,
         ));
       } else {
-        // Exhale
         items.add(TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.6)
               .chain(CurveTween(curve: Curves.easeInOut)),
@@ -106,7 +104,6 @@ class _BreathingExerciseState extends State<BreathingExercise>
           weight: weight,
         ));
       } else {
-        // Exhale
         items.add(TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.4),
           weight: weight,
@@ -135,7 +132,6 @@ class _BreathingExerciseState extends State<BreathingExercise>
       final currentPhase = _pattern.phases[_currentPhaseIndex];
 
       if (phaseElapsed >= currentPhase.durationSeconds) {
-        // Move to next phase
         phaseElapsed = 0;
         final nextIndex =
             (_currentPhaseIndex + 1) % _pattern.phases.length;
@@ -189,56 +185,86 @@ class _BreathingExerciseState extends State<BreathingExercise>
               child: AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
-                  return Transform.scale(
-                    scale: _isActive ? _scaleAnim.value : 0.6,
-                    child: Opacity(
-                      opacity: _isActive ? _opacityAnim.value : 0.4,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.primaryLight,
-                        ),
-                        alignment: Alignment.center,
+                  final scale = _isActive ? _scaleAnim.value : 0.6;
+                  final opacity = _isActive ? _opacityAnim.value : 0.4;
+
+                  return Center(
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity,
                         child: Container(
-                          width: 140,
-                          height: 140,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primary,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                AppColors.primary.withValues(alpha: 0.15),
+                                AppColors.primary.withValues(alpha: 0.08),
+                              ],
+                            ),
+                            // Subtle glow when active
+                            boxShadow: _isActive
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.2),
+                                      blurRadius: 32,
+                                      spreadRadius: 4,
+                                    ),
+                                  ]
+                                : [],
                           ),
                           alignment: Alignment.center,
-                          child: _isActive
-                              ? Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _pattern
-                                          .phases[_currentPhaseIndex].label,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                          child: Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withValues(alpha: 0.85),
+                                ],
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: _isActive
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _pattern
+                                            .phases[_currentPhaseIndex].label,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '$_secondsLeft',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.w700,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '$_secondsLeft',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -1,
+                                        ),
                                       ),
+                                    ],
+                                  )
+                                : const Text(
+                                    'Tap to Start',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ],
-                                )
-                              : const Text(
-                                  'Tap to Start',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                     ),
@@ -254,7 +280,7 @@ class _BreathingExerciseState extends State<BreathingExercise>
                 : '${_pattern.description}\n${_pattern.phases.map((p) => '${p.durationSeconds}s ${p.label.toLowerCase()}').join(', ')}',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: AppColors.textSecondary,
               height: 1.4,
             ),

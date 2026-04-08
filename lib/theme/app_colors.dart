@@ -1,42 +1,41 @@
 import 'dart:ui';
 
 class AppColors {
+  // -- Primary wellness accent (green) --
   static const primary = Color(0xFF34C759);
-  static const primaryDark = Color(0xFF248A3D);
-  static const primaryLight = Color(0xFFD1F2D9);
-  static const accent = Color(0xFF007AFF);
-  static const accentLight = Color(0xFFD6EAFF);
 
+  // -- Interactive accent (iOS blue) --
+  static const accent = Color(0xFF007AFF);
+
+  // -- Semantic --
+  static const danger = Color(0xFFFF3B30);
+  static const warning = Color(0xFFFF9F0A);
+
+  // -- Surfaces --
   static const background = Color(0xFFF2F2F7);
   static const surface = Color(0xFFFFFFFF);
 
-  static const text = Color(0xFF1C1C1E);
-  static const textSecondary = Color(0xFF8E8E93);
-  static const textTertiary = Color(0xFFAEAEB2);
+  // -- Text hierarchy (black at varying opacity) --
+  static const text = Color(0xD9000000); // 85%
+  static const textSecondary = Color(0x99000000); // 60%
+  static const textTertiary = Color(0x4D000000); // 30%
 
-  static const success = Color(0xFF34C759);
-  static const warning = Color(0xFFFF9F0A);
-  static const danger = Color(0xFFFF3B30);
-  static const purple = Color(0xFFAF52DE);
-  static const indigo = Color(0xFF5856D6);
-  static const teal = Color(0xFF5AC8FA);
-
-  static const dangerLight = Color(0xFFFFE5E5);
-  static const warningLight = Color(0xFFFFF4E6);
-  static const successLight = Color(0xFFE8FAE8);
-  static const purpleLight = Color(0xFFF4E8FA);
-
+  // -- Separators & borders --
+  static const separator = Color(0x4A3C3C43); // iOS system separator
   static const border = Color(0xFFE5E5EA);
-  static const borderLight = Color(0xFFF2F2F7);
+
+  // ---------------------------------------------------------------------------
+  // Wellness helpers
+  // ---------------------------------------------------------------------------
 
   static Color getWellnessColor(int score) {
-    if (score >= 75) return success;
-    if (score >= 50) return warning;
+    if (score >= 65) return primary;
+    if (score >= 40) return warning;
     return danger;
   }
 
   static String getWellnessLabel(int score) {
-    if (score >= 80) return "You're doing great!";
+    if (score >= 80) return "You're doing great";
     if (score >= 65) return 'Mostly good, stay mindful';
     if (score >= 50) return 'We noticed some changes';
     if (score >= 35) return 'Consider taking a break';

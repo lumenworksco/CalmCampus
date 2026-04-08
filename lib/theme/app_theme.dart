@@ -11,7 +11,7 @@ class AppTheme {
           secondary: AppColors.primary,
           surface: AppColors.surface,
         ),
-        // Let Flutter auto-select SF Pro on iOS (fontFamily: null is default)
+        // No fontFamily -- let iOS use SF Pro automatically
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.background,
           elevation: 0,
@@ -28,14 +28,15 @@ class AppTheme {
         cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
+          shadowColor: Colors.transparent,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         dividerTheme: const DividerThemeData(
-          color: AppColors.border,
-          thickness: 0.5,
+          color: AppColors.separator,
+          thickness: 0.33,
           space: 0,
         ),
         textTheme: const TextTheme(
@@ -53,14 +54,14 @@ class AppTheme {
           ),
           headlineSmall: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.4,
             color: AppColors.text,
           ),
           titleLarge: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.4,
+            letterSpacing: -0.4,
             color: AppColors.text,
           ),
           titleMedium: TextStyle(
@@ -101,18 +102,19 @@ class AppTheme {
           ),
           labelMedium: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             color: AppColors.textSecondary,
           ),
           labelSmall: TextStyle(
             fontSize: 11,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             letterSpacing: 0.1,
             color: AppColors.textTertiary,
           ),
         ),
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
       );
 
   static CupertinoThemeData get cupertinoTheme => const CupertinoThemeData(

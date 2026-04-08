@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
@@ -23,7 +24,6 @@ class _GratitudeJournalState extends State<GratitudeJournal> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.existingEntry ?? '');
-    // If no existing entry, start in edit mode
     _isEditing = widget.existingEntry == null || widget.existingEntry!.isEmpty;
   }
 
@@ -63,8 +63,8 @@ class _GratitudeJournalState extends State<GratitudeJournal> {
         const Text(
           'What are you grateful for today?',
           style: TextStyle(
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
             color: AppColors.textSecondary,
           ),
         ),
@@ -72,77 +72,61 @@ class _GratitudeJournalState extends State<GratitudeJournal> {
 
         if (_isEditing) ...[
           // Editable text field
-          TextField(
+          CupertinoTextField(
             controller: _controller,
             maxLines: 3,
             minLines: 2,
             onChanged: (_) => setState(() {}),
+            placeholder: 'I am grateful for...',
+            placeholderStyle: const TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: 15,
+            ),
             style: const TextStyle(
               fontSize: 15,
               color: AppColors.text,
               height: 1.4,
             ),
-            decoration: InputDecoration(
-              hintText: 'I am grateful for...',
-              hintStyle: const TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: 15,
-              ),
-              filled: true,
-              fillColor: AppColors.background,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: AppColors.accent, width: 1.5),
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
           const SizedBox(height: 12),
 
-          // Save button — only visible when text is entered
+          // Save button
           if (_hasText)
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
+              child: CupertinoButton(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 8),
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(20),
+                minimumSize: const Size(44, 36),
                 onPressed: () {
                   widget.onSave(_controller.text.trim());
                   setState(() => _isEditing = false);
                 },
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 14,
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    color: CupertinoColors.white,
                   ),
                 ),
-                child: const Text('Save'),
               ),
             ),
         ] else ...[
-          // Read-only display of existing entry
+          // Read-only display
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               _controller.text,
@@ -156,26 +140,23 @@ class _GratitudeJournalState extends State<GratitudeJournal> {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(
+            child: CupertinoButton(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
               onPressed: () => setState(() => _isEditing = true),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.accent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.edit_outlined, size: 16),
+                  Icon(CupertinoIcons.pencil, size: 15, color: AppColors.accent),
                   SizedBox(width: 6),
-                  Text('Edit'),
+                  Text(
+                    'Edit',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/behavioral_signal.dart';
 import '../theme/app_colors.dart';
@@ -8,36 +9,60 @@ class SignalCard extends StatelessWidget {
 
   const SignalCard({super.key, required this.signal, this.baselineComparison});
 
-  static const _iconConfig = <String, (String, Color)>{
-    'steps': ('🚶', AppColors.successLight),
-    'moon': ('🌙', AppColors.purpleLight),
-    'phone': ('📱', AppColors.warningLight),
-    'keyboard': ('⌨️', AppColors.accentLight),
-    'target': ('🎯', AppColors.dangerLight),
+  static const _iconConfig = <String, (IconData, Color)>{
+    'steps': (CupertinoIcons.flame_fill, Color(0xFFFF9F0A)),
+    'moon': (CupertinoIcons.moon_fill, Color(0xFF5856D6)),
+    'phone': (CupertinoIcons.device_phone_portrait, Color(0xFF8E8E93)),
+    'keyboard': (CupertinoIcons.keyboard, Color(0xFF8E8E93)),
+    'target': (CupertinoIcons.scope, Color(0xFF007AFF)),
   };
 
   @override
   Widget build(BuildContext context) {
-    final config = _iconConfig[signal.icon] ?? ('📊', const Color(0xFFF5F5F5));
-    final trendColor = signal.trendIsGood ? AppColors.success : AppColors.danger;
+    final config =
+        _iconConfig[signal.icon] ?? (CupertinoIcons.chart_bar, const Color(0xFF8E8E93));
+    final trendColor = signal.trendIsGood ? AppColors.primary : AppColors.danger;
     final trendLabel = signal.trendIsGood
         ? (signal.trend == SignalTrend.stable ? 'Stable' : 'Good')
-        : (signal.trend == SignalTrend.stable ? 'Stable' : 'Needs attention');
+        : (signal.trend == SignalTrend.stable ? 'Stable' : 'Attention');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          // Icon
+          // Icon in subtle tinted circle
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: config.$2,
-              borderRadius: BorderRadius.circular(10),
+              color: config.$2.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: Text(config.$1, style: const TextStyle(fontSize: 18)),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(config.$1, size: 18, color: config.$2),
+                // Tiny pulsing green dot for live signals
+                if (signal.isLive)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.surface,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(width: 12),
           // Info
@@ -45,46 +70,13 @@ class SignalCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      signal.label,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                    ),
-                    if (signal.isLive) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.successLight,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: const BoxDecoration(
-                                color: AppColors.success,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.success,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                Text(
+                  signal.label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 1),
                 Row(
@@ -97,37 +89,56 @@ class SignalCard extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.text,
+                        letterSpacing: -0.4,
                       ),
                     ),
                     Text(
                       ' ${signal.unit}',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // Trend
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          // Trend -- small colored dot + label
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                trendLabel,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
                   color: trendColor,
+                  shape: BoxShape.circle,
                 ),
               ),
-              if (baselineComparison != null)
-                Text(
-                  baselineComparison!,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
+              const SizedBox(width: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    trendLabel,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: trendColor,
+                    ),
                   ),
-                ),
+                  if (baselineComparison != null)
+                    Text(
+                      baselineComparison!,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ],

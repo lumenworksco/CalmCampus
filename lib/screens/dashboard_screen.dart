@@ -33,25 +33,14 @@ class DashboardScreen extends StatelessWidget {
     return 'Good evening';
   }
 
-  Color _anomalyBorderColor(AnomalyType type) {
+  Color _anomalyDotColor(AnomalyType type) {
     switch (type) {
       case AnomalyType.warning:
         return AppColors.warning;
       case AnomalyType.positive:
-        return AppColors.success;
+        return AppColors.primary;
       case AnomalyType.info:
         return AppColors.accent;
-    }
-  }
-
-  String _anomalyEmoji(AnomalyType type) {
-    switch (type) {
-      case AnomalyType.warning:
-        return '\u26A0\uFE0F';
-      case AnomalyType.positive:
-        return '\u2705';
-      case AnomalyType.info:
-        return '\u2139\uFE0F';
     }
   }
 
@@ -107,7 +96,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 // -- Header --
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 60, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -121,24 +110,25 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        DateFormat('EEEE, MMMM d').format(DateTime.now()),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textSecondary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          if (streak > 0) ...[
+                            const SizedBox(width: 12),
+                            StreakCard(streakDays: streak),
+                          ],
+                        ],
                       ),
                     ],
                   ),
                 ),
-
-                // -- Streak card --
-                if (streak > 0)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: StreakCard(streakDays: streak),
-                  ),
 
                 // -- Check-in section --
                 _buildCheckinSection(
@@ -149,40 +139,42 @@ class DashboardScreen extends StatelessWidget {
                   todayData.energyRating,
                 ),
 
-                // -- Wellness gauge with demo toggle --
+                // -- Wellness gauge --
                 GestureDetector(
                   onLongPress: () => repo.toggleDemoMode(),
                   child: Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 32, horizontal: 16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Stack(
                       children: [
-                        Center(child: WellnessGauge(score: todayData.wellnessScore)),
+                        Center(
+                            child: WellnessGauge(
+                                score: todayData.wellnessScore)),
                         if (repo.demoMode)
                           Positioned(
                             top: 0,
                             right: 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: AppColors.warning.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text(
                                 'DEMO',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.warning, letterSpacing: 0.5),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.warning,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ),
@@ -219,107 +211,82 @@ class DashboardScreen extends StatelessWidget {
 
                 // -- Anomaly banners --
                 if (displayAnomalies.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   for (final anomaly in displayAnomalies)
                     Container(
-                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border(
-                          left: BorderSide(
-                            color: _anomalyBorderColor(anomaly.type),
-                            width: 3,
-                          ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 6,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _anomalyEmoji(anomaly.type),
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    anomaly.title,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.text,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    anomaly.message,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: AppColors.textSecondary,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ],
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Small colored dot instead of emoji
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _anomalyDotColor(anomaly.type),
+                                shape: BoxShape.circle,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  anomaly.title,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.text,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  anomaly.message,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textSecondary,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
 
-                // -- Signals header --
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
-                  child: Text(
-                    "Today's Signals",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 20),
 
-                // -- Signals grouped card --
+                // -- Signals grouped card (no header text) --
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
                       for (int i = 0; i < allSignals.length; i++) ...[
                         SignalCard(signal: allSignals[i]),
                         if (i < allSignals.length - 1)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 68),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 64),
                             child: Divider(
-                              height: 0.5,
-                              thickness: 0.5,
-                              color: AppColors.border,
+                              height: 0.33,
+                              thickness: 0.33,
+                              color: AppColors.separator,
                             ),
                           ),
                       ],
@@ -327,31 +294,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
 
-                // -- Privacy footer --
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 28),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.lock_fill,
-                        size: 13,
-                        color: AppColors.textTertiary,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'All data stays on your device',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Bottom padding to account for tab bar
+                // Bottom padding for tab bar
                 const SizedBox(height: 100),
               ],
             ),
@@ -389,18 +332,11 @@ class DashboardScreen extends StatelessWidget {
 
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
@@ -434,7 +370,7 @@ class DashboardScreen extends StatelessWidget {
             ),
             const Icon(
               CupertinoIcons.checkmark_circle_fill,
-              color: AppColors.success,
+              color: AppColors.primary,
               size: 20,
             ),
           ],
@@ -442,25 +378,18 @@ class DashboardScreen extends StatelessWidget {
       );
     }
 
-    // Not yet checked in -- subtle prompt
+    // Not yet checked in -- row of emoji faces, subtle tap hint
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () => _showCheckinSheet(context, repo),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
@@ -472,22 +401,19 @@ class DashboardScreen extends StatelessWidget {
                 ),
               )),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: BorderRadius.circular(20),
+              const Text(
+                'How are you?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
                 ),
-                child: const Text(
-                  'Check in',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: CupertinoColors.white,
-                    letterSpacing: -0.2,
-                  ),
-                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                CupertinoIcons.chevron_right,
+                size: 14,
+                color: AppColors.textTertiary,
               ),
             ],
           ),

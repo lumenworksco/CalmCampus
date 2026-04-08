@@ -82,7 +82,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                       resource.contact!,
                       style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -129,7 +129,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
         children: [
           // -- Header --
           const Padding(
-            padding: EdgeInsets.fromLTRB(20, 60, 20, 4),
+            padding: EdgeInsets.fromLTRB(16, 60, 16, 4),
             child: Text(
               'Calm',
               style: TextStyle(
@@ -141,69 +141,61 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
               'Evidence-based wellbeing tools',
               style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
             ),
           ),
 
-          // -- Emergency button --
+          // -- Emergency help -- subtle text link --
           if (hasEmergency)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: _showEmergencySheet,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.dangerLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(CupertinoIcons.phone_fill,
-                          size: 16, color: AppColors.danger),
-                      SizedBox(width: 8),
-                      Text(
-                        'I Need Help Now',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.danger,
-                        ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.phone_fill,
+                        size: 15, color: AppColors.danger),
+                    SizedBox(width: 6),
+                    Text(
+                      'I Need Help Now',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.danger,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
           // -- Breathing --
-          _sectionHeader('BREATHING'),
           _card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Segmented control for pattern
+                // Sliding segmented control (iOS 13+ style)
                 SizedBox(
                   width: double.infinity,
-                  child: CupertinoSegmentedControl<int>(
+                  child: CupertinoSlidingSegmentedControl<int>(
                     groupValue: _selectedPatternIndex,
-                    onValueChanged: (i) =>
-                        setState(() => _selectedPatternIndex = i),
-                    padding: EdgeInsets.zero,
+                    onValueChanged: (i) {
+                      if (i != null) setState(() => _selectedPatternIndex = i);
+                    },
                     children: {
                       for (int i = 0; i < _patterns.length; i++)
                         i: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                              horizontal: 8, vertical: 6),
                           child: Text(
                             _patterns[i].name,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w500),
                           ),
                         ),
                     },
@@ -212,16 +204,20 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   _patterns[_selectedPatternIndex].description,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  style: const TextStyle(
+                      fontSize: 13, color: AppColors.textTertiary),
                   textAlign: TextAlign.center,
                 ),
-                Center(child: BreathingExercise(pattern: _patterns[_selectedPatternIndex])),
+                Center(
+                    child: BreathingExercise(
+                        pattern: _patterns[_selectedPatternIndex])),
               ],
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // -- Mindfulness --
-          _sectionHeader('MINDFULNESS'),
           _card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,8 +256,9 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // -- Gratitude --
-          _sectionHeader('GRATITUDE'),
           _card(
             child: GratitudeJournal(
               existingEntry: repo.getTodayGratitude(),
@@ -269,8 +266,9 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // -- Relaxation --
-          _sectionHeader('RELAXATION'),
           _card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,19 +286,20 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // -- Quick Actions --
-          _sectionHeader('QUICK ACTIONS'),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 _actionCard(
-                  icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                  icon: CupertinoIcons.wind,
                   title: 'Take a Walk',
                   desc: '10 min reset',
                   onTap: _showWalkTimer,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 _actionCard(
                   icon: CupertinoIcons.chat_bubble_2,
                   title: 'Reach Out',
@@ -311,32 +310,28 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
             ),
           ),
 
+          const SizedBox(height: 16),
+
           // -- Campus Resources --
           _sectionHeader('CAMPUS RESOURCES'),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 1),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               children: [
                 for (int i = 0; i < nonEmergencyResources.length; i++) ...[
                   _resourceRow(nonEmergencyResources[i]),
                   if (i < nonEmergencyResources.length - 1)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
                       child: Divider(
-                          height: 0.5,
-                          thickness: 0.5,
-                          color: AppColors.border),
+                        height: 0.33,
+                        thickness: 0.33,
+                        color: AppColors.separator,
+                      ),
                     ),
                 ],
               ],
@@ -354,43 +349,33 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
   // Reusable builders
   // ---------------------------------------------------------------------------
 
-  /// iOS Settings-style uppercase gray section header.
   Widget _sectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Text(
         title,
         style: const TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
-          letterSpacing: 0.8,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 
-  /// White card with subtle shadow and rounded corners.
   Widget _card({required Widget child}) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: child,
     );
   }
 
-  /// Side-by-side quick-action card (takes a Cupertino icon rather than emoji).
   Widget _actionCard({
     required IconData icon,
     required String title,
@@ -405,18 +390,11 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 28, color: AppColors.accent),
+              Icon(icon, size: 24, color: AppColors.accent),
               const SizedBox(height: 10),
               Text(
                 title,
@@ -441,7 +419,6 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
     );
   }
 
-  /// iOS grouped-list style resource row with chevron.
   Widget _resourceRow(CampusResource resource) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
@@ -458,7 +435,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                   Text(
                     resource.name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 17,
                       fontWeight: FontWeight.w400,
                       color: AppColors.text,
                     ),
@@ -487,22 +464,6 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.successLight,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                resource.type,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
             const Icon(
               CupertinoIcons.chevron_right,
               size: 14,
@@ -516,7 +477,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
 }
 
 // =============================================================================
-// Walk Timer — CupertinoAlertDialog
+// Walk Timer
 // =============================================================================
 
 class _WalkTimerDialog extends StatefulWidget {
@@ -577,9 +538,8 @@ class _WalkTimerDialogState extends State<_WalkTimerDialog> {
             const Text(
               'Your body and mind will thank you',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
               ),
             ),
             if (!_started) ...[
@@ -605,8 +565,8 @@ class _WalkTimerDialogState extends State<_WalkTimerDialog> {
               const Text(
                 'Well done!',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.primary,
                 ),
               ),

@@ -21,13 +21,13 @@ class _PMRGuideState extends State<PMRGuide>
     ('Feet', 'Curl your toes tightly'),
   ];
 
-  static const _tenseDuration = 5; // seconds
-  static const _releaseDuration = 10; // seconds
+  static const _tenseDuration = 5;
+  static const _releaseDuration = 10;
 
   bool _isActive = false;
   bool _isComplete = false;
   int _currentGroup = 0;
-  bool _isTensePhase = true; // true = tense, false = release
+  bool _isTensePhase = true;
   int _secondsLeft = _tenseDuration;
   Timer? _timer;
 
@@ -40,18 +40,15 @@ class _PMRGuideState extends State<PMRGuide>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15), // one full cycle
+      duration: const Duration(seconds: 15),
     );
 
-    // Tense = contracted (0.6), Release = expanded (1.0)
     _scaleAnim = TweenSequence<double>([
-      // Tense phase (5s / 15s = 1/3 weight): stay small
       TweenSequenceItem(
         tween: Tween(begin: 0.65, end: 0.55)
             .chain(CurveTween(curve: Curves.easeInOut)),
         weight: _tenseDuration.toDouble(),
       ),
-      // Release phase (10s / 15s = 2/3 weight): expand
       TweenSequenceItem(
         tween: Tween(begin: 0.55, end: 1.0)
             .chain(CurveTween(curve: Curves.easeOut)),
@@ -92,20 +89,16 @@ class _PMRGuideState extends State<PMRGuide>
 
         if (_secondsLeft <= 0) {
           if (_isTensePhase) {
-            // Switch to release phase
             _isTensePhase = false;
             _secondsLeft = _releaseDuration;
           } else {
-            // Move to next muscle group
             _currentGroup++;
             if (_currentGroup >= _muscleGroups.length) {
-              // Exercise complete
               _stop(completed: true);
               return;
             }
             _isTensePhase = true;
             _secondsLeft = _tenseDuration;
-            // Restart animation for new cycle
             _controller.forward(from: 0);
           }
         }
@@ -141,7 +134,7 @@ class _PMRGuideState extends State<PMRGuide>
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
-          // Animated circle
+          // Animated circle with gradient
           GestureDetector(
             onTap: _isActive ? _stop : _start,
             child: SizedBox(
@@ -153,59 +146,90 @@ class _PMRGuideState extends State<PMRGuide>
                   final scale = _isActive ? _scaleAnim.value : 0.6;
                   final opacity = _isActive ? _opacityAnim.value : 0.4;
 
-                  return Transform.scale(
-                    scale: scale,
-                    child: Opacity(
-                      opacity: opacity,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isActive
-                              ? _phaseColor.withValues(alpha: 0.15)
-                              : AppColors.primaryLight,
-                        ),
-                        alignment: Alignment.center,
+                  return Center(
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity,
                         child: Container(
-                          width: 110,
-                          height: 110,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isActive ? _phaseColor : AppColors.primary,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: _isActive
+                                  ? [
+                                      _phaseColor.withValues(alpha: 0.18),
+                                      _phaseColor.withValues(alpha: 0.08),
+                                    ]
+                                  : [
+                                      AppColors.primary.withValues(alpha: 0.15),
+                                      AppColors.primary.withValues(alpha: 0.08),
+                                    ],
+                            ),
+                            boxShadow: _isActive
+                                ? [
+                                    BoxShadow(
+                                      color:
+                                          _phaseColor.withValues(alpha: 0.18),
+                                      blurRadius: 24,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : [],
                           ),
                           alignment: Alignment.center,
-                          child: _isActive
-                              ? Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _isTensePhase
-                                          ? 'Tense...'
-                                          : 'Release...',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
+                          child: Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  _isActive ? _phaseColor : AppColors.primary,
+                                  (_isActive ? _phaseColor : AppColors.primary)
+                                      .withValues(alpha: 0.85),
+                                ],
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: _isActive
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        _isTensePhase
+                                            ? 'Tense...'
+                                            : 'Release...',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '$_secondsLeft',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w700,
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '$_secondsLeft',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: -1,
+                                        ),
                                       ),
+                                    ],
+                                  )
+                                : Text(
+                                    _isComplete ? 'Done!' : 'Tap to Start',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ],
-                                )
-                              : Text(
-                                  _isComplete ? 'Done!' : 'Tap to Start',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                     ),
@@ -217,12 +241,11 @@ class _PMRGuideState extends State<PMRGuide>
           const SizedBox(height: 16),
 
           if (_isActive) ...[
-            // Muscle group name and instruction
             Text(
               _muscleGroups[_currentGroup].$1,
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
                 color: AppColors.text,
               ),
             ),
@@ -230,20 +253,17 @@ class _PMRGuideState extends State<PMRGuide>
             Text(
               _muscleGroups[_currentGroup].$2,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
               ),
             ),
             const SizedBox(height: 12),
-
-            // Progress indicator
             _buildProgressBar(),
             const SizedBox(height: 8),
             Text(
               'Step ${_currentGroup + 1} of ${_muscleGroups.length}',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: AppColors.textTertiary,
               ),
             ),
@@ -254,7 +274,7 @@ class _PMRGuideState extends State<PMRGuide>
                   : 'Progressive Muscle Relaxation\n7 muscle groups \u2022 Tense 5s, release 10s',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.textSecondary,
                 height: 1.4,
               ),

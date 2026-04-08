@@ -69,7 +69,7 @@ class _CheckinSheetState extends State<CheckinSheet> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 14, 24, 20 + bottomPadding),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 20 + bottomPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,27 +88,33 @@ class _CheckinSheetState extends State<CheckinSheet> {
               const SizedBox(height: 24),
 
               // Title
-              const Text(
-                'Daily Check-in',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: AppColors.text,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'Daily Check-in',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.4,
+                    color: AppColors.text,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'How are you feeling today?',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
-                  letterSpacing: -0.2,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'How are you feeling today?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
 
-              // Mood picker
+              // Mood picker (emojis are appropriate here)
               MoodPicker(
                 selectedMood: _selectedMood,
                 onMoodSelected: (mood) =>
@@ -117,18 +123,21 @@ class _CheckinSheetState extends State<CheckinSheet> {
               const SizedBox(height: 32),
 
               // Energy level header
-              const Text(
-                'Energy Level',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
-                  color: AppColors.text,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'Energy Level',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                    color: AppColors.text,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Energy level selector -- filled circles with check
+              // Energy level -- simple row of dots
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(5, (index) {
@@ -148,33 +157,19 @@ class _CheckinSheetState extends State<CheckinSheet> {
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 250),
                             curve: Curves.easeOutCubic,
-                            width: 36,
-                            height: 36,
+                            width: 12,
+                            height: 12,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: isFilled
                                   ? AppColors.accent
-                                  : AppColors.background,
+                                  : Colors.transparent,
                               border: Border.all(
                                 color: isFilled
                                     ? AppColors.accent
                                     : AppColors.border,
                                 width: 2,
                               ),
-                            ),
-                            alignment: Alignment.center,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: isFilled
-                                  ? const Icon(
-                                      CupertinoIcons.checkmark,
-                                      size: 16,
-                                      color: Colors.white,
-                                      key: ValueKey('check'),
-                                    )
-                                  : const SizedBox.shrink(
-                                      key: ValueKey('empty'),
-                                    ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -203,7 +198,7 @@ class _CheckinSheetState extends State<CheckinSheet> {
               ),
               const SizedBox(height: 32),
 
-              // Save button -- CupertinoButton.filled, full width
+              // Save button
               SizedBox(
                 width: double.infinity,
                 child: AnimatedOpacity(

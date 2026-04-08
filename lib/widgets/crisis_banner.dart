@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
 class CrisisBanner extends StatelessWidget {
-  final VoidCallback? onTalkToSomeone; // calls tel:106
-  final VoidCallback? onViewResources; // navigates to resources
+  final VoidCallback? onTalkToSomeone;
+  final VoidCallback? onViewResources;
 
   const CrisisBanner({
     super.key,
@@ -12,57 +11,43 @@ class CrisisBanner extends StatelessWidget {
     this.onViewResources,
   });
 
-  // Refined warm palette -- soft, caring, not clinical
-  static const _warmBg = Color(0xFFFFF5F1);
+  // Warm palette -- subtle, caring
+  static const _warmBg = Color(0xFFFFF8F6);
   static const _warmAccent = Color(0xFFDE6B56);
-  static const _warmAccentSoft = Color(0xFFF5D4CB);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _warmBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _warmAccentSoft,
-          width: 0.5,
-        ),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Intentional icon -- warm hand, not childish
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _warmAccentSoft.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              CupertinoIcons.heart_fill,
-              size: 22,
-              color: _warmAccent,
-            ),
+          // Icon
+          const Icon(
+            CupertinoIcons.heart_fill,
+            size: 22,
+            color: _warmAccent,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Title
           const Text(
             "We're here for you",
             style: TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               letterSpacing: -0.4,
               color: AppColors.text,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
-          // Message -- caring tone
+          // Message
           const Text(
             "We noticed your wellbeing has been low lately. "
             "You don't have to face this alone.",
@@ -73,9 +58,9 @@ class CrisisBanner extends StatelessWidget {
               letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Primary action -- Cupertino filled button
+          // Primary action
           SizedBox(
             width: double.infinity,
             child: CupertinoButton(
@@ -86,7 +71,7 @@ class CrisisBanner extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(CupertinoIcons.phone, size: 18, color: Colors.white),
+                  Icon(CupertinoIcons.phone, size: 16, color: CupertinoColors.white),
                   SizedBox(width: 8),
                   Text(
                     'Talk to someone',
@@ -94,21 +79,21 @@ class CrisisBanner extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.2,
-                      color: Colors.white,
+                      color: CupertinoColors.white,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
-          // Secondary action -- subtle Cupertino style
+          // Secondary action
           SizedBox(
             width: double.infinity,
             child: CupertinoButton(
               onPressed: onViewResources,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: const Text(
                 'View resources',
                 style: TextStyle(
