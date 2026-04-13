@@ -61,7 +61,9 @@ class _CheckinSheetState extends State<CheckinSheet> {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Container(
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
@@ -230,6 +232,7 @@ class _CheckinSheetState extends State<CheckinSheet> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -13,7 +13,7 @@ class BreathingExercise extends StatefulWidget {
 }
 
 class _BreathingExerciseState extends State<BreathingExercise>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _isActive = false;
   int _currentPhaseIndex = 0;
   int _secondsLeft = 0;
@@ -277,7 +277,7 @@ class _BreathingExerciseState extends State<BreathingExercise>
           Text(
             _isActive
                 ? 'Tap the circle to stop'
-                : '${_pattern.description}\n${_pattern.phases.map((p) => '${p.durationSeconds}s ${p.label.toLowerCase()}').join(', ')}',
+                : _pattern.phases.map((p) => '${p.durationSeconds}s ${p.label.toLowerCase()}').join(' · '),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 13,

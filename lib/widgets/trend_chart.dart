@@ -86,9 +86,12 @@ class TrendChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 22,
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
-                        if (idx < 0 || idx >= labels.length) {
+                        if (value != idx.toDouble() ||
+                            idx < 0 ||
+                            idx >= labels.length) {
                           return const SizedBox();
                         }
                         return Text(
