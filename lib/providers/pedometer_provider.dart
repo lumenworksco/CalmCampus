@@ -13,6 +13,7 @@ class PedometerProvider extends ChangeNotifier {
   StreamSubscription<StepCount>? _subscription;
   int? _initialSteps;
   String? _storedDate;
+  Timer? _timeoutTimer;
 
   int get stepsToday => _stepsToday;
   bool get isAvailable => _isAvailable;
@@ -22,7 +23,7 @@ class PedometerProvider extends ChangeNotifier {
     _loadAndStart();
 
     // If no event received within 3 seconds, mark as unavailable
-    Future.delayed(const Duration(seconds: 3), () {
+    _timeoutTimer = Timer(const Duration(seconds: 3), () {
       if (_isLoading) {
         _isLoading = false;
         _isAvailable = false;
@@ -48,6 +49,7 @@ class PedometerProvider extends ChangeNotifier {
         (event) {
           _isAvailable = true;
           _isLoading = false;
+          _timeoutTimer?.cancel();
 
           if (_initialSteps == null) {
             // First event for today (new day or first launch)
@@ -89,6 +91,7 @@ class PedometerProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _timeoutTimer?.cancel();
     _subscription?.cancel();
     super.dispose();
   }

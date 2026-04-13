@@ -59,7 +59,7 @@ class _CheckinSheetState extends State<CheckinSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
       decoration: const BoxDecoration(

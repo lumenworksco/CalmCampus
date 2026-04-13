@@ -22,7 +22,8 @@ class TrendChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentValue = data.isNotEmpty ? data.last : 0.0;
+    if (data.isEmpty) return const SizedBox.shrink();
+    final currentValue = data.last;
     final minY = data.reduce((a, b) => a < b ? a : b) * 0.85;
     final maxY = data.reduce((a, b) => a > b ? a : b) * 1.1;
 

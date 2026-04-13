@@ -12,8 +12,8 @@ void main() async {
 
   try {
     await Hive.initFlutter();
-  } catch (_) {
-    // Hive init can fail on some platforms; continue without persistence
+  } catch (e) {
+    debugPrint('Hive init failed: $e');
   }
 
   final appState = AppState();
@@ -22,8 +22,8 @@ void main() async {
   final repo = WellnessRepository();
   try {
     await repo.init();
-  } catch (_) {
-    // Repository init failed; app will still work with synthetic data
+  } catch (e) {
+    debugPrint('WellnessRepository init failed: $e');
   }
 
   runApp(

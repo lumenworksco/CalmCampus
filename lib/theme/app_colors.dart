@@ -11,18 +11,29 @@ class AppColors {
   static const danger = Color(0xFFFF3B30);
   static const warning = Color(0xFFFF9F0A);
 
-  // -- Surfaces --
+  // -- Light surfaces --
   static const background = Color(0xFFF2F2F7);
   static const surface = Color(0xFFFFFFFF);
 
-  // -- Text hierarchy (black at varying opacity) --
+  // -- Dark surfaces --
+  static const backgroundDark = Color(0xFF000000);
+  static const surfaceDark = Color(0xFF1C1C1E);
+
+  // -- Text hierarchy (light mode, black at varying opacity) --
   static const text = Color(0xD9000000); // 85%
   static const textSecondary = Color(0x99000000); // 60%
   static const textTertiary = Color(0x4D000000); // 30%
 
+  // -- Text hierarchy (dark mode, white at varying opacity) --
+  static const textDark = Color(0xD9FFFFFF); // 85%
+  static const textSecondaryDark = Color(0x99FFFFFF); // 60%
+  static const textTertiaryDark = Color(0x4DFFFFFF); // 30%
+
   // -- Separators & borders --
   static const separator = Color(0x4A3C3C43); // iOS system separator
   static const border = Color(0xFFE5E5EA);
+  static const separatorDark = Color(0x99545458);
+  static const borderDark = Color(0xFF38383A);
 
   // ---------------------------------------------------------------------------
   // Wellness helpers

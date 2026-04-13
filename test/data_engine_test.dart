@@ -96,11 +96,16 @@ void main() {
     });
   });
 
-  group('getWeeklyInsight()', () {
+  group('getSmartInsight()', () {
     test('returns a non-empty string', () {
-      final insight = getWeeklyInsight();
+      final insight = getSmartInsight();
       expect(insight, isA<String>());
       expect(insight, isNotEmpty);
+    });
+
+    test('returns fallback for empty history', () {
+      final insight = getSmartInsight(history: []);
+      expect(insight, equals('No data available yet.'));
     });
   });
 }

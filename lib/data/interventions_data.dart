@@ -26,7 +26,7 @@ const mindfulnessPrompts = [
   "What's one thing you can see, hear, and feel right now?",
   'Notice your breathing. Is it shallow or deep? Just observe without changing it.',
   'What emotion are you feeling right now? Name it without judgement.',
-  "Think of one thing that went well today, no matter how small.",
+  'Think of one thing that went well today, no matter how small.',
   'Scan your body from head to toe. Where are you holding tension?',
   'What would you say to a friend feeling the way you do right now?',
   'Take a moment to appreciate something in your environment.',

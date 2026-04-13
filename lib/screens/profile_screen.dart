@@ -1,17 +1,39 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() => _version = '${info.version} (${info.buildNumber})');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final repo = context.watch<WellnessRepository>();
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return CupertinoScrollbar(
       child: SingleChildScrollView(
@@ -22,9 +44,9 @@ class ProfileScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // -- Large title header --
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 60, 16, 0),
-              child: Text(
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 0),
+              child: const Text(
                 'Settings',
                 style: TextStyle(
                   fontSize: 34,
@@ -72,7 +94,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Gentle alerts when stress is detected',
+                            'Gentle alerts when stress is detected (coming soon)',
                             style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -115,7 +137,7 @@ class ProfileScreen extends StatelessWidget {
             // -- About section --
             _sectionLabel('ABOUT'),
             _groupedCard([
-              _infoRow('Version', '1.0.0'),
+              _infoRow('Version', _version.isEmpty ? '...' : _version),
               _separator(),
               _infoRow('Framework', 'CBT & ACT'),
               _separator(),
@@ -221,8 +243,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _separator() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
+    return const Padding(
+      padding: EdgeInsets.only(left: 16),
       child: Divider(
         height: 0.33,
         thickness: 0.33,
@@ -285,7 +307,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
+            const Icon(
               CupertinoIcons.chevron_right,
               size: 14,
               color: AppColors.textTertiary,

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/data_engine.dart';
+import '../data/mood_data.dart';
 import '../providers/pedometer_provider.dart';
 import '../services/baseline_service.dart';
 import '../services/wellness_repository.dart';
@@ -11,13 +11,6 @@ import '../widgets/trend_chart.dart';
 class InsightsScreen extends StatelessWidget {
   const InsightsScreen({super.key});
 
-  static const _moodEmojis = <int, String>{
-    1: '\u{1F61E}',
-    2: '\u{1F614}',
-    3: '\u{1F610}',
-    4: '\u{1F642}',
-    5: '\u{1F60A}',
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +25,8 @@ class InsightsScreen extends StatelessWidget {
 
     final daysWithMood = weeklyData.where((d) => d.moodRating != null).toList();
 
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return CupertinoScrollbar(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(
@@ -41,9 +36,9 @@ class InsightsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // -- Large title header --
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 60, 16, 4),
-              child: Text(
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 4),
+              child: const Text(
                 'Insights',
                 style: TextStyle(
                   fontSize: 34,
@@ -157,8 +152,7 @@ class InsightsScreen extends StatelessWidget {
             TrendChart(
               title: 'Focus Score',
               data: weeklyData
-                  .map((d) =>
-                      (100 - (d.appSwitches / 40 * 100)).roundToDouble())
+                  .map((d) => computeFocusScore(d.appSwitches).toDouble())
                   .toList(),
               labels: labels,
               color: AppColors.accent,
@@ -217,7 +211,7 @@ class InsightsScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     if (mood != null)
                       Text(
-                        _moodEmojis[mood] ?? '\u{1F610}',
+                        moodEmoji(mood),
                         style: const TextStyle(fontSize: 24),
                       )
                     else

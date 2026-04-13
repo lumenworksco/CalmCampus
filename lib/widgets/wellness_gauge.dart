@@ -13,7 +13,9 @@ class WellnessGauge extends StatelessWidget {
     final color = AppColors.getWellnessColor(score);
     final label = AppColors.getWellnessLabel(score);
 
-    return TweenAnimationBuilder<double>(
+    return Semantics(
+      label: 'Wellness score $score out of 100. $label',
+      child: TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: score.toDouble()),
       duration: const Duration(milliseconds: 800),
       curve: Curves.easeOutCubic,
@@ -51,6 +53,7 @@ class WellnessGauge extends StatelessWidget {
           ],
         );
       },
+    ),
     );
   }
 }

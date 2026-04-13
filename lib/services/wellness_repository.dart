@@ -17,8 +17,9 @@ class WellnessRepository extends ChangeNotifier {
     try {
       _box = await Hive.openBox(_boxName);
       _isInitialized = true;
-    } catch (_) {
+    } catch (e) {
       _isInitialized = false;
+      debugPrint('WellnessRepository failed to open Hive box: $e');
     }
   }
 
@@ -30,6 +31,9 @@ class WellnessRepository extends ChangeNotifier {
 
   /// Get today's data, generating and persisting synthetic data on first access.
   DailyData getTodayData({int? realSteps}) {
+    if (!_isInitialized) {
+      return data_engine.getEnhancedTodayData(realSteps: realSteps);
+    }
     final dateStr = _todayStr();
     final stored = _box?.get(dateStr);
 

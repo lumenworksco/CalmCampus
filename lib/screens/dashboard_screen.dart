@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/data_engine.dart';
+import '../data/interventions_data.dart';
+import '../data/mood_data.dart';
 import '../models/behavioral_signal.dart';
 import '../models/wellness_anomaly.dart';
 import '../providers/pedometer_provider.dart';
@@ -17,14 +19,6 @@ import '../widgets/wellness_gauge.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
-
-  static const _moodEmojis = <int, String>{
-    1: '\u{1F61E}',
-    2: '\u{1F614}',
-    3: '\u{1F610}',
-    4: '\u{1F642}',
-    5: '\u{1F60A}',
-  };
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -49,6 +43,69 @@ class DashboardScreen extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
+  }
+
+  Future<void> _launchResource(CampusResource resource) async {
+    if (resource.actionUrl != null) {
+      final uri = Uri.parse(resource.actionUrl!);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      }
+    }
+  }
+
+  void _showResourcesSheet(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('Campus Resources'),
+        message: const Text('Support is available when you need it'),
+        actions: [
+          for (final resource in campusResources)
+            CupertinoActionSheetAction(
+              isDestructiveAction: resource.isEmergency,
+              onPressed: () {
+                Navigator.pop(ctx);
+                _launchResource(resource);
+              },
+              child: Column(
+                children: [
+                  Text(
+                    resource.name,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    resource.description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (resource.contact != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      resource.contact!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
   }
 
   @override
@@ -87,6 +144,8 @@ class DashboardScreen extends StatelessWidget {
       ...signals,
     ];
 
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return CupertinoScrollbar(
       child: CustomScrollView(
         slivers: [
@@ -96,7 +155,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 // -- Header --
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 60, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -140,47 +199,18 @@ class DashboardScreen extends StatelessWidget {
                 ),
 
                 // -- Wellness gauge --
-                GestureDetector(
-                  onLongPress: () => repo.toggleDemoMode(),
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 32, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                            child: WellnessGauge(
-                                score: todayData.wellnessScore)),
-                        if (repo.demoMode)
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.warning.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'DEMO',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.warning,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 32, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Center(
+                      child: WellnessGauge(
+                          score: todayData.wellnessScore)),
                 ),
 
                 // -- Crisis banner --
@@ -188,24 +218,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   CrisisBanner(
                     onTalkToSomeone: _launchPhone,
-                    onViewResources: () {
-                      showCupertinoDialog(
-                        context: context,
-                        builder: (ctx) => CupertinoAlertDialog(
-                          title: const Text('Campus Resources'),
-                          content: const Text(
-                            'Campus wellness resources coming soon.',
-                          ),
-                          actions: [
-                            CupertinoDialogAction(
-                              isDefaultAction: true,
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    onViewResources: () => _showResourcesSheet(context),
                   ),
                 ],
 
@@ -214,6 +227,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   for (final anomaly in displayAnomalies)
                     Container(
+                      key: ValueKey(anomaly.id),
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
@@ -279,10 +293,10 @@ class DashboardScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       for (int i = 0; i < allSignals.length; i++) ...[
-                        SignalCard(signal: allSignals[i]),
+                        SignalCard(key: ValueKey(allSignals[i].id), signal: allSignals[i]),
                         if (i < allSignals.length - 1)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 64),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 64),
                             child: Divider(
                               height: 0.33,
                               thickness: 0.33,
@@ -312,15 +326,8 @@ class DashboardScreen extends StatelessWidget {
     int? energyRating,
   ) {
     if (hasCheckin && moodRating != null) {
-      final emoji = _moodEmojis[moodRating] ?? '\u{1F610}';
-      final moodLabel = switch (moodRating) {
-        1 => 'Awful',
-        2 => 'Bad',
-        3 => 'Okay',
-        4 => 'Good',
-        5 => 'Great',
-        _ => '',
-      };
+      final emoji = moodEmoji(moodRating);
+      final label = moodLabel(moodRating);
       final energyLabel = switch (energyRating) {
         1 => 'Very low energy',
         2 => 'Low energy',
@@ -347,7 +354,7 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Feeling $moodLabel',
+                    'Feeling $label',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -394,10 +401,10 @@ class DashboardScreen extends StatelessWidget {
           child: Row(
             children: [
               // Emoji faces row
-              ...(_moodEmojis.values.map(
+              ...(moodData.values.map(
                 (e) => Padding(
                   padding: const EdgeInsets.only(right: 6),
-                  child: Text(e, style: const TextStyle(fontSize: 22)),
+                  child: Text(e.$1, style: const TextStyle(fontSize: 22)),
                 ),
               )),
               const Spacer(),

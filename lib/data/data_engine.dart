@@ -87,6 +87,11 @@ DailyData _generateDay(DateTime date) {
 /// Public wrapper to generate synthetic data for an arbitrary date.
 DailyData generateForDate(DateTime date) => _generateDay(date);
 
+/// Compute focus score (0-100) from app switch count.
+/// Higher switches = lower focus. Capped at 40 switches = 0%.
+int computeFocusScore(int appSwitches) =>
+    (100 - (appSwitches / 40 * 100)).round().clamp(0, 100);
+
 List<DailyData> getWeeklyData({int days = 7}) {
   final now = DateTime.now();
   return List.generate(days, (i) {
@@ -137,7 +142,7 @@ List<BehavioralSignal> getTodaySignals() {
     BehavioralSignal(
       id: 'focus',
       label: 'Focus Score',
-      value: (100 - (today.appSwitches / 40 * 100)).round().toString(),
+      value: computeFocusScore(today.appSwitches).toString(),
       unit: '%',
       trend: trend(yesterday.appSwitches.toDouble(), today.appSwitches.toDouble()),
       trendIsGood: today.appSwitches <= 15,
@@ -146,35 +151,6 @@ List<BehavioralSignal> getTodaySignals() {
   ];
 }
 
-String getWeeklyInsight() {
-  final week = getWeeklyData();
-  final today = week.last;
-  final avgSleep = week.map((d) => d.sleepHours).reduce((a, b) => a + b) / week.length;
-  final avgScreen = week.map((d) => d.screenTimeHours).reduce((a, b) => a + b) / week.length;
-  final worstDay = week.reduce((a, b) => a.wellnessScore < b.wellnessScore ? a : b);
-  final bestDay = week.reduce((a, b) => a.wellnessScore > b.wellnessScore ? a : b);
-  final scoreTrend = today.wellnessScore - week.first.wellnessScore;
-
-  if (today.sleepHours < 6) {
-    return 'You slept only ${today.sleepHours}h last night. Sleep deprivation compounds — even one recovery night helps.';
-  }
-  if (today.screenTimeHours > 6) {
-    return 'Screen time is elevated at ${today.screenTimeHours}h. Try the 20-20-20 rule: every 20 min, look 20 feet away for 20 seconds.';
-  }
-  if (worstDay.wellnessScore < 50) {
-    return '${worstDay.dayLabel} was your toughest day (score: ${worstDay.wellnessScore}). Best was ${bestDay.dayLabel} at ${bestDay.wellnessScore}. Recovery pattern looks healthy.';
-  }
-  if (avgSleep < 6.5) {
-    return 'Average sleep is ${avgSleep.toStringAsFixed(1)}h — below the recommended 7-9h. Sleep is the strongest predictor of next-day wellbeing.';
-  }
-  if (scoreTrend > 10) {
-    return 'Wellness is improving (+$scoreTrend points since ${week.first.dayLabel}). Keep your current routine — consistency is key.';
-  }
-  if (avgScreen > 5.5) {
-    return 'Average screen time is ${avgScreen.toStringAsFixed(1)}h this week. Consider app timers to stay mindful of usage.';
-  }
-  return 'Your wellness has been ${today.wellnessScore >= 70 ? 'steady' : 'variable'} this week. ${bestDay.dayLabel} was your strongest day.';
-}
 
 /// Enhanced today data that factors in real pedometer steps and mood rating.
 /// If [realSteps] is provided, it adjusts the wellness score accordingly.
@@ -255,7 +231,7 @@ List<WellnessAnomaly> detectAnomalies({List<DailyData>? history}) {
   final avgScreen = week.map((d) => d.screenTimeHours).reduce((a, b) => a + b) / week.length;
   final avgWellness = week.map((d) => d.wellnessScore).reduce((a, b) => a + b) / week.length;
   final avgFocus =
-      week.map((d) => 100 - (d.appSwitches / 40) * 100).reduce((a, b) => a + b) / week.length;
+      week.map((d) => computeFocusScore(d.appSwitches).toDouble()).reduce((a, b) => a + b) / week.length;
 
   // Sleep < 6h absolute warning
   if (today.sleepHours < 6) {
@@ -353,7 +329,7 @@ List<WellnessAnomaly> detectAnomalies({List<DailyData>? history}) {
   }
 
   // Focus score dropping (today vs average)
-  final todayFocus = 100 - (today.appSwitches / 40) * 100;
+  final todayFocus = computeFocusScore(today.appSwitches).toDouble();
   if (avgFocus - todayFocus > 15) {
     anomalies.add(WellnessAnomaly(
       id: 'focus-drop',

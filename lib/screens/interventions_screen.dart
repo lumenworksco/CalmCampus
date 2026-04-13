@@ -123,14 +123,16 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
     final nonEmergencyResources =
         campusResources.where((r) => !r.isEmergency).toList();
 
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // -- Header --
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 60, 16, 4),
-            child: Text(
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 4),
+            child: const Text(
               'Calm',
               style: TextStyle(
                 fontSize: 34,
@@ -270,10 +272,10 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
 
           // -- Relaxation --
           _card(
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Progressive Muscle Relaxation',
                   style: TextStyle(
                     fontSize: 17,
@@ -281,7 +283,7 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                     color: AppColors.text,
                   ),
                 ),
-                const PMRGuide(),
+                PMRGuide(),
               ],
             ),
           ),
@@ -325,8 +327,8 @@ class _InterventionsScreenState extends State<InterventionsScreen> {
                 for (int i = 0; i < nonEmergencyResources.length; i++) ...[
                   _resourceRow(nonEmergencyResources[i]),
                   if (i < nonEmergencyResources.length - 1)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16),
                       child: Divider(
                         height: 0.33,
                         thickness: 0.33,

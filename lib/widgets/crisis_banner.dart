@@ -17,7 +17,10 @@ class CrisisBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Semantics(
+      label: 'Wellbeing alert. We noticed your wellbeing has been low. Support is available.',
+      liveRegion: true,
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -49,7 +52,7 @@ class CrisisBanner extends StatelessWidget {
 
           // Message
           const Text(
-            "We noticed your wellbeing has been low lately. "
+            'We noticed your wellbeing has been low lately. '
             "You don't have to face this alone.",
             style: TextStyle(
               fontSize: 15,
@@ -107,6 +110,7 @@ class CrisisBanner extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

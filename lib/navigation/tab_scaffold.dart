@@ -119,7 +119,11 @@ class _GlassTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      label: label,
+      button: true,
+      selected: isSelected,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
@@ -147,7 +151,7 @@ class _GlassTabButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected ? AppColors.accent : AppColors.textTertiary,
                 letterSpacing: -0.1,
@@ -156,6 +160,7 @@ class _GlassTabButton extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

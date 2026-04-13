@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/mood_data.dart';
 import '../theme/app_colors.dart';
 
 class MoodPicker extends StatelessWidget {
@@ -11,25 +12,21 @@ class MoodPicker extends StatelessWidget {
     required this.onMoodSelected,
   });
 
-  static const _moods = <int, (String, String)>{
-    1: ('\u{1F61E}', 'Awful'),
-    2: ('\u{1F614}', 'Bad'),
-    3: ('\u{1F610}', 'Okay'),
-    4: ('\u{1F642}', 'Good'),
-    5: ('\u{1F60A}', 'Great'),
-  };
-
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: _moods.entries.map((entry) {
+      children: moodData.entries.map((entry) {
         final mood = entry.key;
         final emoji = entry.value.$1;
         final label = entry.value.$2;
         final isSelected = selectedMood == mood;
 
-        return GestureDetector(
+        return Semantics(
+          label: 'Mood: $label',
+          button: true,
+          selected: isSelected,
+          child: GestureDetector(
           onTap: () => onMoodSelected(mood),
           behavior: HitTestBehavior.opaque,
           child: SizedBox(
@@ -78,6 +75,7 @@ class MoodPicker extends StatelessWidget {
               ],
             ),
           ),
+        ),
         );
       }).toList(),
     );
