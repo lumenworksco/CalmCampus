@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/insights_screen.dart';
-import '../screens/interventions_screen.dart';
+import '../screens/toolkit_screen.dart';
 import '../screens/profile_screen.dart';
 import '../theme/app_colors.dart';
 
@@ -20,14 +20,14 @@ class _TabScaffoldState extends State<TabScaffold> {
   static const _tabs = <_TabItem>[
     _TabItem(icon: CupertinoIcons.house_fill, label: 'Home'),
     _TabItem(icon: CupertinoIcons.chart_bar_fill, label: 'Insights'),
-    _TabItem(icon: CupertinoIcons.leaf_arrow_circlepath, label: 'Calm'),
+    _TabItem(icon: CupertinoIcons.square_grid_2x2_fill, label: 'Toolkit'),
     _TabItem(icon: CupertinoIcons.person_fill, label: 'Profile'),
   ];
 
   static const _screens = <Widget>[
     DashboardScreen(),
     InsightsScreen(),
-    InterventionsScreen(),
+    ToolkitScreen(),
     ProfileScreen(),
   ];
 
