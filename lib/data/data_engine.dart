@@ -57,19 +57,20 @@ DailyData _generateDay(DateTime date) {
   final screenBase = 2.5 + totalStress * 5.5;
   final screenTimeHours = _round1(_clamp(screenBase + (rand() - 0.5) * 1.0, 1.5, 9.0));
 
-  final typingBase = 55 - totalStress * 25;
-  final typingSpeed = _clamp(typingBase + (rand() - 0.5) * 6, 25, 60).round();
+  // Active minutes: higher stress → less activity
+  final activityBase = 50 - totalStress * 40;
+  final activeMinutes = _clamp(activityBase + (rand() - 0.5) * 20, 5, 90).round();
 
   final switchBase = 8 + totalStress * 27;
   final appSwitches = _clamp(switchBase + (rand() - 0.5) * 6, 5, 40).round();
 
   final sleepScore = _clamp((sleepHours - 4) / 5, 0, 1);
   final screenScore = _clamp(1 - (screenTimeHours - 1.5) / 7, 0, 1);
-  final typingScore = _clamp((typingSpeed - 25) / 35, 0, 1);
+  final activityScore = _clamp((activeMinutes - 5) / 85, 0, 1);
   final focusScore = _clamp(1 - (appSwitches - 5) / 30, 0, 1);
 
   final rawWellness =
-      (sleepScore * 0.35 + screenScore * 0.25 + typingScore * 0.15 + focusScore * 0.25) * 100;
+      (sleepScore * 0.30 + screenScore * 0.25 + activityScore * 0.20 + focusScore * 0.25) * 100;
   final wellnessScore = _clamp(rawWellness + (rand() - 0.5) * 6, 10, 98).round();
 
   return DailyData(
@@ -78,7 +79,7 @@ DailyData _generateDay(DateTime date) {
     dayOfWeek: dow,
     sleepHours: sleepHours,
     screenTimeHours: screenTimeHours,
-    typingSpeed: typingSpeed,
+    activeMinutes: activeMinutes,
     appSwitches: appSwitches,
     wellnessScore: wellnessScore,
   );
@@ -101,8 +102,8 @@ List<DailyData> getWeeklyData({int days = 7}) {
 
 DailyData getTodayData() => _generateDay(DateTime.now());
 
-List<BehavioralSignal> getTodaySignals() {
-  final today = getTodayData();
+List<BehavioralSignal> getTodaySignals({DailyData? todayOverride}) {
+  final today = todayOverride ?? getTodayData();
   final yesterday = _generateDay(DateTime.now().subtract(const Duration(days: 1)));
 
   SignalTrend trend(double a, double b) {
@@ -131,13 +132,13 @@ List<BehavioralSignal> getTodaySignals() {
       icon: 'phone',
     ),
     BehavioralSignal(
-      id: 'typing',
-      label: 'Typing Pattern',
-      value: today.typingSpeed.toString(),
-      unit: 'wpm',
-      trend: trend(today.typingSpeed.toDouble(), yesterday.typingSpeed.toDouble()),
-      trendIsGood: today.typingSpeed >= 45,
-      icon: 'keyboard',
+      id: 'movement',
+      label: 'Active Minutes',
+      value: today.activeMinutes.toString(),
+      unit: 'min',
+      trend: trend(today.activeMinutes.toDouble(), yesterday.activeMinutes.toDouble()),
+      trendIsGood: today.activeMinutes >= 30,
+      icon: 'walk',
     ),
     BehavioralSignal(
       id: 'focus',
@@ -152,47 +153,67 @@ List<BehavioralSignal> getTodaySignals() {
 }
 
 
-/// Enhanced today data that factors in real pedometer steps and mood rating.
-/// If [realSteps] is provided, it adjusts the wellness score accordingly.
-/// If [moodRating] is provided (1-5), it further adjusts the wellness score.
-DailyData getEnhancedTodayData({int? realSteps, int? moodRating}) {
-  final base = getTodayData();
-  int adjustedScore = base.wellnessScore;
+/// Enhanced today data that overlays real sensor data on the synthetic baseline.
+///
+/// Real values replace their synthetic counterparts, then the wellness score is
+/// recalculated from the (possibly real) inputs.
+DailyData getEnhancedTodayData({
+  int? realSteps,
+  int? moodRating,
+  double? realSleepHours,
+  double? realScreenTimeHours,
+  int? realActiveMinutes,
+  int? realAppCount,
+}) {
+  var base = getTodayData();
 
-  // Step bonus
-  if (realSteps != null) {
-    int stepBonus;
-    if (realSteps >= 8000) {
-      stepBonus = 5;
-    } else if (realSteps >= 5000) {
-      stepBonus = 3;
-    } else if (realSteps >= 2000) {
-      stepBonus = 1;
-    } else {
-      stepBonus = -3;
-    }
-    adjustedScore += stepBonus;
-  }
-
-  // Mood adjustment
-  if (moodRating != null) {
-    adjustedScore += _moodAdjustment(moodRating);
-  }
-
-  adjustedScore = _clamp(adjustedScore.toDouble(), 10, 98).round();
-
-  return DailyData(
-    date: base.date,
-    dayLabel: base.dayLabel,
-    dayOfWeek: base.dayOfWeek,
-    sleepHours: base.sleepHours,
-    screenTimeHours: base.screenTimeHours,
-    typingSpeed: base.typingSpeed,
-    appSwitches: base.appSwitches,
-    wellnessScore: adjustedScore,
+  // Overlay real sensor data onto synthetic baseline.
+  base = base.copyWith(
+    sleepHours: realSleepHours ?? base.sleepHours,
+    screenTimeHours: realScreenTimeHours ?? base.screenTimeHours,
+    activeMinutes: realActiveMinutes ?? base.activeMinutes,
+    appSwitches: realAppCount ?? base.appSwitches,
     moodRating: moodRating,
     realSteps: realSteps,
   );
+
+  final score = calculateWellnessScore(base, realSteps: realSteps);
+  return base.copyWith(wellnessScore: score);
+}
+
+/// Calculate wellness score from the four behavioral signals.
+///
+/// Weights: sleep 0.30, screen time 0.25, activity 0.20, focus 0.25.
+/// Optional [realSteps] and [DailyData.moodRating] add bonuses / penalties.
+int calculateWellnessScore(DailyData data, {int? realSteps}) {
+  final sleepScore = _clamp((data.sleepHours - 4) / 5, 0, 1);
+  final screenScore = _clamp(1 - (data.screenTimeHours - 1.5) / 7, 0, 1);
+  final activityScore = _clamp((data.activeMinutes - 5) / 85, 0, 1);
+  final focusScore = _clamp(1 - (data.appSwitches - 5) / 30, 0, 1);
+
+  double raw =
+      (sleepScore * 0.30 + screenScore * 0.25 + activityScore * 0.20 + focusScore * 0.25) * 100;
+
+  // Step bonus
+  final steps = realSteps ?? data.realSteps;
+  if (steps != null) {
+    if (steps >= 8000) {
+      raw += 5;
+    } else if (steps >= 5000) {
+      raw += 3;
+    } else if (steps >= 2000) {
+      raw += 1;
+    } else {
+      raw -= 3;
+    }
+  }
+
+  // Mood adjustment
+  if (data.moodRating != null) {
+    raw += _moodAdjustment(data.moodRating!);
+  }
+
+  return raw.round().clamp(10, 98);
 }
 
 /// Returns a wellness score adjustment based on mood rating (1-5).

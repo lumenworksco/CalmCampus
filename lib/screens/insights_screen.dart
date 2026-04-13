@@ -150,6 +150,14 @@ class InsightsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             TrendChart(
+              title: 'Active Minutes',
+              data: weeklyData.map((d) => d.activeMinutes.toDouble()).toList(),
+              labels: labels,
+              color: const Color(0xFF34C759),
+              suffix: ' min',
+            ),
+            const SizedBox(height: 4),
+            TrendChart(
               title: 'Focus Score',
               data: weeklyData
                   .map((d) => computeFocusScore(d.appSwitches).toDouble())

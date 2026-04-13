@@ -4,7 +4,7 @@ class DailyData {
   final int dayOfWeek;
   final double sleepHours;
   final double screenTimeHours;
-  final int typingSpeed;
+  final int activeMinutes;
   final int appSwitches;
   final int wellnessScore;
   final int? moodRating;
@@ -18,7 +18,7 @@ class DailyData {
     required this.dayOfWeek,
     required this.sleepHours,
     required this.screenTimeHours,
-    required this.typingSpeed,
+    required this.activeMinutes,
     required this.appSwitches,
     required this.wellnessScore,
     this.moodRating,
@@ -34,7 +34,7 @@ class DailyData {
       'dayOfWeek': dayOfWeek,
       'sleepHours': sleepHours,
       'screenTimeHours': screenTimeHours,
-      'typingSpeed': typingSpeed,
+      'activeMinutes': activeMinutes,
       'appSwitches': appSwitches,
       'wellnessScore': wellnessScore,
       'moodRating': moodRating,
@@ -51,7 +51,8 @@ class DailyData {
       dayOfWeek: map['dayOfWeek'] as int,
       sleepHours: (map['sleepHours'] as num).toDouble(),
       screenTimeHours: (map['screenTimeHours'] as num).toDouble(),
-      typingSpeed: map['typingSpeed'] as int,
+      // Legacy data has typingSpeed but no activeMinutes — default to 30.
+      activeMinutes: map['activeMinutes'] as int? ?? 30,
       appSwitches: map['appSwitches'] as int,
       wellnessScore: map['wellnessScore'] as int,
       moodRating: map['moodRating'] as int?,
@@ -67,7 +68,7 @@ class DailyData {
     int? dayOfWeek,
     double? sleepHours,
     double? screenTimeHours,
-    int? typingSpeed,
+    int? activeMinutes,
     int? appSwitches,
     int? wellnessScore,
     int? moodRating,
@@ -81,7 +82,7 @@ class DailyData {
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       sleepHours: sleepHours ?? this.sleepHours,
       screenTimeHours: screenTimeHours ?? this.screenTimeHours,
-      typingSpeed: typingSpeed ?? this.typingSpeed,
+      activeMinutes: activeMinutes ?? this.activeMinutes,
       appSwitches: appSwitches ?? this.appSwitches,
       wellnessScore: wellnessScore ?? this.wellnessScore,
       moodRating: moodRating ?? this.moodRating,

@@ -14,7 +14,7 @@ void main() {
       expect(today.dayOfWeek, inInclusiveRange(0, 6));
       expect(today.sleepHours, isA<double>());
       expect(today.screenTimeHours, isA<double>());
-      expect(today.typingSpeed, isA<int>());
+      expect(today.activeMinutes, isA<int>());
       expect(today.appSwitches, isA<int>());
       expect(today.wellnessScore, isA<int>());
     });
@@ -26,7 +26,7 @@ void main() {
       expect(first.date, equals(second.date));
       expect(first.sleepHours, equals(second.sleepHours));
       expect(first.screenTimeHours, equals(second.screenTimeHours));
-      expect(first.typingSpeed, equals(second.typingSpeed));
+      expect(first.activeMinutes, equals(second.activeMinutes));
       expect(first.appSwitches, equals(second.appSwitches));
       expect(first.wellnessScore, equals(second.wellnessScore));
     });
@@ -72,11 +72,11 @@ void main() {
       }
     });
 
-    test('all typing speeds are between 25 and 60', () {
+    test('all active minutes are between 5 and 90', () {
       final week = getWeeklyData();
       for (final day in week) {
-        expect(day.typingSpeed, inInclusiveRange(25, 60),
-            reason: 'typingSpeed ${day.typingSpeed} on ${day.date} out of range');
+        expect(day.activeMinutes, inInclusiveRange(5, 90),
+            reason: 'activeMinutes ${day.activeMinutes} on ${day.date} out of range');
       }
     });
   });

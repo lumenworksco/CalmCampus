@@ -30,31 +30,85 @@ class WellnessRepository extends ChangeNotifier {
   }
 
   /// Get today's data, generating and persisting synthetic data on first access.
-  DailyData getTodayData({int? realSteps}) {
+  ///
+  /// Real sensor values (when available) replace synthetic counterparts and the
+  /// wellness score is recalculated from the (possibly real) inputs.
+  DailyData getTodayData({
+    int? realSteps,
+    double? realSleepHours,
+    double? realScreenTimeHours,
+    int? realActiveMinutes,
+    int? realAppCount,
+  }) {
     if (!_isInitialized) {
-      return data_engine.getEnhancedTodayData(realSteps: realSteps);
+      return data_engine.getEnhancedTodayData(
+        realSteps: realSteps,
+        realSleepHours: realSleepHours,
+        realScreenTimeHours: realScreenTimeHours,
+        realActiveMinutes: realActiveMinutes,
+        realAppCount: realAppCount,
+      );
     }
     final dateStr = _todayStr();
     final stored = _box?.get(dateStr);
 
     if (stored != null) {
       var data = DailyData.fromMap(Map<String, dynamic>.from(stored as Map));
-      if (realSteps != null) {
-        data = data.copyWith(realSteps: realSteps);
-      }
-      if (_demoMode) {
-        data = data.copyWith(wellnessScore: 28);
-      }
+      data = _overlayRealData(data,
+        realSteps: realSteps,
+        realSleepHours: realSleepHours,
+        realScreenTimeHours: realScreenTimeHours,
+        realActiveMinutes: realActiveMinutes,
+        realAppCount: realAppCount,
+      );
+      if (_demoMode) data = data.copyWith(wellnessScore: 28);
       return data;
     }
 
     // First access: generate synthetic data and persist
-    var data = data_engine.getEnhancedTodayData(realSteps: realSteps);
+    var data = data_engine.getEnhancedTodayData(
+      realSteps: realSteps,
+      realSleepHours: realSleepHours,
+      realScreenTimeHours: realScreenTimeHours,
+      realActiveMinutes: realActiveMinutes,
+      realAppCount: realAppCount,
+    );
     _box?.put(dateStr, data.toMap());
-    if (_demoMode) {
-      data = data.copyWith(wellnessScore: 28);
-    }
+    if (_demoMode) data = data.copyWith(wellnessScore: 28);
     return data;
+  }
+
+  /// Overlay real sensor data onto stored [DailyData] and recalculate the
+  /// wellness score so the dashboard always reflects live readings.
+  DailyData _overlayRealData(
+    DailyData data, {
+    int? realSteps,
+    double? realSleepHours,
+    double? realScreenTimeHours,
+    int? realActiveMinutes,
+    int? realAppCount,
+  }) {
+    if (realSleepHours == null &&
+        realScreenTimeHours == null &&
+        realActiveMinutes == null &&
+        realAppCount == null &&
+        realSteps == null) {
+      return data;
+    }
+
+    var updated = data.copyWith(
+      sleepHours: realSleepHours ?? data.sleepHours,
+      screenTimeHours: realScreenTimeHours ?? data.screenTimeHours,
+      activeMinutes: realActiveMinutes ?? data.activeMinutes,
+      appSwitches: realAppCount ?? data.appSwitches,
+      realSteps: realSteps ?? data.realSteps,
+    );
+
+    final score = data_engine.calculateWellnessScore(
+      updated,
+      realSteps: realSteps ?? data.realSteps,
+    );
+    return updated.copyWith(wellnessScore: score);
   }
 
   /// Save check-in data (mood, energy) for today.

@@ -8,7 +8,10 @@ import '../data/interventions_data.dart';
 import '../data/mood_data.dart';
 import '../models/behavioral_signal.dart';
 import '../models/wellness_anomaly.dart';
+import '../providers/activity_provider.dart';
+import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
+import '../providers/screen_time_provider.dart';
 import '../screens/checkin_sheet.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
@@ -111,10 +114,28 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pedometer = context.watch<PedometerProvider>();
+    final healthProvider = context.watch<HealthProvider>();
+    final screenTimeProvider = context.watch<ScreenTimeProvider>();
+    final activityProvider = context.watch<ActivityProvider>();
     final repo = context.watch<WellnessRepository>();
+
     final realSteps = pedometer.isAvailable ? pedometer.stepsToday : null;
-    final todayData = repo.getTodayData(realSteps: realSteps);
-    final signals = getTodaySignals();
+    final realSleep = healthProvider.isAvailable ? healthProvider.sleepHours : null;
+    final realScreenTime =
+        screenTimeProvider.isAvailable ? screenTimeProvider.screenTimeHours : null;
+    final realActiveMinutes =
+        activityProvider.isAvailable ? activityProvider.activeMinutes : null;
+    final realAppCount =
+        screenTimeProvider.isAvailable ? screenTimeProvider.appCount : null;
+
+    final todayData = repo.getTodayData(
+      realSteps: realSteps,
+      realSleepHours: realSleep,
+      realScreenTimeHours: realScreenTime,
+      realActiveMinutes: realActiveMinutes,
+      realAppCount: realAppCount,
+    );
+    final signals = getTodaySignals(todayOverride: todayData);
     final history = repo.getRange(7);
     final anomalies = detectAnomalies(history: history);
     final streak = repo.getStreak();
