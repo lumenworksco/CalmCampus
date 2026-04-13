@@ -13,6 +13,7 @@ import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
 import '../screens/checkin_sheet.dart';
+import '../services/gemini_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/crisis_banner.dart';
@@ -20,8 +21,15 @@ import '../widgets/signal_card.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/wellness_gauge.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _anomalyRewriteRequested = false;
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -118,6 +126,7 @@ class DashboardScreen extends StatelessWidget {
     final screenTimeProvider = context.watch<ScreenTimeProvider>();
     final activityProvider = context.watch<ActivityProvider>();
     final repo = context.watch<WellnessRepository>();
+    final gemini = context.watch<GeminiService>();
 
     final realSteps = pedometer.isAvailable ? pedometer.stepsToday : null;
     final realSleep = healthProvider.isAvailable ? healthProvider.sleepHours : null;
@@ -152,6 +161,18 @@ class DashboardScreen extends StatelessWidget {
         .where((a) =>
             a.type == AnomalyType.warning || a.type == AnomalyType.positive)
         .toList();
+
+    // Request AI-rewritten anomaly messages once per session.
+    if (!_anomalyRewriteRequested &&
+        gemini.isAvailable &&
+        displayAnomalies.isNotEmpty) {
+      _anomalyRewriteRequested = true;
+      gemini.rewriteAnomalies(
+        displayAnomalies
+            .map((a) => (a.id, a.title, a.message))
+            .toList(),
+      );
+    }
 
     // Map signal IDs → whether they come from a live sensor.
     final liveStatus = <String, bool>{
@@ -334,7 +355,8 @@ class DashboardScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  anomaly.message,
+                                  gemini.anomalyRewrites?[anomaly.id] ??
+                                      anomaly.message,
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w400,

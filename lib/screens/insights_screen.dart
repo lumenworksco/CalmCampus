@@ -6,7 +6,7 @@ import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
-import '../services/ai_insight_service.dart';
+import '../services/gemini_service.dart';
 import '../services/baseline_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
@@ -53,16 +53,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
         realAppCount: realAppCount,
       );
     }
-    final aiService = context.watch<AiInsightService>();
+    final aiService = context.watch<GeminiService>();
     final fallbackInsight = getSmartInsight(realSteps: realSteps, history: weeklyData);
 
     // Request AI insight once per screen visit.
     if (!_aiRequested && aiService.isAvailable) {
       _aiRequested = true;
-      aiService.generate(weeklyData, realSteps: realSteps);
+      aiService.generateInsight(weeklyData, realSteps: realSteps);
     }
 
-    final insight = aiService.cached ?? fallbackInsight;
+    final insight = aiService.cachedInsight ?? fallbackInsight;
     final labels = weeklyData.map((d) => d.dayLabel).toList();
     final baselineMetrics = baseline.get7DayBaseline();
 
@@ -166,7 +166,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        if (aiService.isGenerating && aiService.cached == null)
+                        if (aiService.isGeneratingInsight && aiService.cachedInsight == null)
                           const Text(
                             'Analyzing your week...',
                             style: TextStyle(

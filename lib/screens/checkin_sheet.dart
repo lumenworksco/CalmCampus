@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/mood_picker.dart';
 
@@ -39,6 +41,8 @@ class CheckinSheet extends StatefulWidget {
 class _CheckinSheetState extends State<CheckinSheet> {
   late int? _selectedMood;
   late int? _selectedEnergy;
+  String? _affirmation;
+  bool _showingAffirmation = false;
 
   static const _energyLabels = [
     'Very low',
@@ -56,6 +60,70 @@ class _CheckinSheetState extends State<CheckinSheet> {
   }
 
   bool get _canSave => _selectedMood != null && _selectedEnergy != null;
+
+  Future<void> _save() async {
+    widget.onComplete(_selectedMood!, _selectedEnergy!);
+
+    final gemini = context.read<GeminiService>();
+    if (gemini.isAvailable) {
+      final text =
+          await gemini.generateAffirmation(_selectedMood!, _selectedEnergy!);
+      if (text != null && mounted) {
+        setState(() {
+          _affirmation = text;
+          _showingAffirmation = true;
+        });
+        await Future.delayed(const Duration(milliseconds: 2500));
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+    }
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Widget _buildAffirmation() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                CupertinoIcons.heart_fill,
+                size: 24,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _affirmation!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: AppColors.text,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap to close',
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -200,35 +268,30 @@ class _CheckinSheetState extends State<CheckinSheet> {
               ),
               const SizedBox(height: 32),
 
-              // Save button
-              SizedBox(
-                width: double.infinity,
-                child: AnimatedOpacity(
-                  opacity: _canSave ? 1.0 : 0.4,
-                  duration: const Duration(milliseconds: 200),
-                  child: CupertinoButton.filled(
-                    onPressed: _canSave
-                        ? () {
-                            widget.onComplete(
-                              _selectedMood!,
-                              _selectedEnergy!,
-                            );
-                            Navigator.of(context).pop();
-                          }
-                        : null,
-                    borderRadius: BorderRadius.circular(14),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.4,
+              // Affirmation or Save button
+              if (_showingAffirmation && _affirmation != null)
+                _buildAffirmation()
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: AnimatedOpacity(
+                    opacity: _canSave ? 1.0 : 0.4,
+                    duration: const Duration(milliseconds: 200),
+                    child: CupertinoButton.filled(
+                      onPressed: _canSave ? _save : null,
+                      borderRadius: BorderRadius.circular(14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.4,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

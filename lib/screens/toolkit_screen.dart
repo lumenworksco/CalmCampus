@@ -10,6 +10,7 @@ import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
+import '../services/gemini_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/breathing_exercise.dart';
@@ -86,6 +87,8 @@ class ToolkitScreen extends StatelessWidget {
     final realAppCount =
         screenTimeProvider.isAvailable ? screenTimeProvider.appCount : null;
 
+    final gemini = context.watch<GeminiService>();
+
     final data = repo.getTodayData(
       realSteps: realSteps,
       realSleepHours: realSleep,
@@ -94,6 +97,11 @@ class ToolkitScreen extends StatelessWidget {
       realAppCount: realAppCount,
     );
     final recs = _getRecommendations(data);
+
+    // Fire off AI reasoning (cached per day, won't re-call on rebuild).
+    if (gemini.isAvailable && gemini.toolReasons == null && recs.isNotEmpty) {
+      gemini.generateToolReasons(data, recs.map((r) => r.toolId).toList());
+    }
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(top: topPad + 16, bottom: 120),
@@ -149,6 +157,7 @@ class ToolkitScreen extends StatelessWidget {
                 separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (ctx, i) => _RecommendationCard(
                   rec: recs[i],
+                  aiReason: gemini.toolReasons?[recs[i].toolId],
                   onTap: () => _openTool(ctx, recs[i].toolId, repo),
                 ),
               ),
@@ -317,8 +326,13 @@ class ToolkitScreen extends StatelessWidget {
 
 class _RecommendationCard extends StatelessWidget {
   final _Recommendation rec;
+  final String? aiReason;
   final VoidCallback onTap;
-  const _RecommendationCard({required this.rec, required this.onTap});
+  const _RecommendationCard({
+    required this.rec,
+    this.aiReason,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +379,7 @@ class _RecommendationCard extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              rec.reason,
+              aiReason ?? rec.reason,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

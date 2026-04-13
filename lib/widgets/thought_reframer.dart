@@ -1,4 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
 
 /// Three-step CBT thought record exercise.
@@ -21,6 +23,8 @@ class _ThoughtReframerState extends State<ThoughtReframer> {
   final _thoughtCtrl = TextEditingController();
   final _reframeCtrl = TextEditingController();
   final _selectedDistortions = <String>{};
+  List<String> _aiSuggestions = [];
+  bool _isLoadingSuggestions = false;
 
   static const _distortions = [
     'All-or-nothing',
@@ -42,9 +46,30 @@ class _ThoughtReframerState extends State<ThoughtReframer> {
   void _next() {
     if (_step < 2) {
       setState(() => _step++);
+      if (_step == 2) _fetchReframes();
     } else {
       setState(() => _isDone = true);
     }
+  }
+
+  void _fetchReframes() {
+    final gemini = context.read<GeminiService>();
+    if (!gemini.isAvailable) return;
+
+    setState(() => _isLoadingSuggestions = true);
+    gemini
+        .suggestReframes(
+      _thoughtCtrl.text,
+      distortions: _selectedDistortions.toList(),
+    )
+        .then((suggestions) {
+      if (mounted) {
+        setState(() {
+          _aiSuggestions = suggestions;
+          _isLoadingSuggestions = false;
+        });
+      }
+    });
   }
 
   void _back() {
@@ -288,6 +313,92 @@ class _ThoughtReframerState extends State<ThoughtReframer> {
               controller: _reframeCtrl,
               placeholder: 'A more balanced way to see this...',
             ),
+
+            // ── AI-suggested reframes ──
+            if (_isLoadingSuggestions) ...[
+              const SizedBox(height: 16),
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CupertinoActivityIndicator(radius: 7),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Generating suggestions...',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (_aiSuggestions.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'AI',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Suggested reframes',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              for (final suggestion in _aiSuggestions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: GestureDetector(
+                    onTap: () {
+                      _reframeCtrl.text = suggestion;
+                      setState(() {});
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Text(
+                        suggestion,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.text,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ],
         );
 

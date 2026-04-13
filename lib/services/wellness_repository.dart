@@ -96,7 +96,7 @@ class WellnessRepository extends ChangeNotifier {
       return data;
     }
 
-    var updated = data.copyWith(
+    final updated = data.copyWith(
       sleepHours: realSleepHours ?? data.sleepHours,
       screenTimeHours: realScreenTimeHours ?? data.screenTimeHours,
       activeMinutes: realActiveMinutes ?? data.activeMinutes,
