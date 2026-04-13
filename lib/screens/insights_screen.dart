@@ -2,7 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../data/data_engine.dart';
 import '../data/mood_data.dart';
+import '../providers/activity_provider.dart';
+import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
+import '../providers/screen_time_provider.dart';
 import '../services/baseline_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
@@ -15,10 +18,33 @@ class InsightsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pedometer = context.watch<PedometerProvider>();
+    final healthProvider = context.watch<HealthProvider>();
+    final screenTimeProvider = context.watch<ScreenTimeProvider>();
+    final activityProvider = context.watch<ActivityProvider>();
     final repo = context.watch<WellnessRepository>();
     final baseline = context.read<BaselineService>();
+
     final realSteps = pedometer.isAvailable ? pedometer.stepsToday : null;
+    final realSleep = healthProvider.isAvailable ? healthProvider.sleepHours : null;
+    final realScreenTime =
+        screenTimeProvider.isAvailable ? screenTimeProvider.screenTimeHours : null;
+    final realActiveMinutes =
+        activityProvider.isAvailable ? activityProvider.activeMinutes : null;
+    final realAppCount =
+        screenTimeProvider.isAvailable ? screenTimeProvider.appCount : null;
+
     final weeklyData = repo.getRange(7);
+    // Replace today's entry with real-data-enhanced version so charts and
+    // insight text match the dashboard.
+    if (weeklyData.isNotEmpty) {
+      weeklyData[weeklyData.length - 1] = repo.getTodayData(
+        realSteps: realSteps,
+        realSleepHours: realSleep,
+        realScreenTimeHours: realScreenTime,
+        realActiveMinutes: realActiveMinutes,
+        realAppCount: realAppCount,
+      );
+    }
     final insight = getSmartInsight(realSteps: realSteps, history: weeklyData);
     final labels = weeklyData.map((d) => d.dayLabel).toList();
     final baselineMetrics = baseline.get7DayBaseline();

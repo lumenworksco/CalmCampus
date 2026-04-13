@@ -137,6 +137,11 @@ class DashboardScreen extends StatelessWidget {
     );
     final signals = getTodaySignals(todayOverride: todayData);
     final history = repo.getRange(7);
+    // Replace today's entry with the real-data-enhanced version so that
+    // anomaly detection and the gauge use the same score.
+    if (history.isNotEmpty) {
+      history[history.length - 1] = todayData;
+    }
     final anomalies = detectAnomalies(history: history);
     final streak = repo.getStreak();
     final hasCheckin = repo.hasCheckinToday();

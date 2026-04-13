@@ -148,9 +148,9 @@ class SignalCard extends StatelessWidget {
                 color: AppColors.textTertiary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
-                'Estimated',
-                style: TextStyle(
+              child: Text(
+                signal.value == '—' ? 'Unavailable' : 'Estimated',
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textTertiary,
