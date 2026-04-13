@@ -146,6 +146,8 @@ class DashboardScreen extends StatelessWidget {
     final streak = repo.getStreak();
     final hasCheckin = repo.hasCheckinToday();
 
+    final insight = getSmartInsight(realSteps: realSteps, history: history);
+
     final displayAnomalies = anomalies
         .where((a) =>
             a.type == AnomalyType.warning || a.type == AnomalyType.positive)
@@ -257,9 +259,27 @@ class DashboardScreen extends StatelessWidget {
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
-                      child: WellnessGauge(
-                          score: todayData.wellnessScore)),
+                  child: Column(
+                    children: [
+                      Center(
+                          child: WellnessGauge(
+                              score: todayData.wellnessScore)),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          insight,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 // -- Crisis banner --
