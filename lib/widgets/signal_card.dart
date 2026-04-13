@@ -104,42 +104,59 @@ class SignalCard extends StatelessWidget {
               ],
             ),
           ),
-          // Trend -- small colored dot + label
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: trendColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    trendLabel,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: trendColor,
-                    ),
+          // Trend or "Estimated" label
+          if (signal.isLive)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: trendColor,
+                    shape: BoxShape.circle,
                   ),
-                  if (baselineComparison != null)
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
                     Text(
-                      baselineComparison!,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textTertiary,
+                      trendLabel,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: trendColor,
                       ),
                     ),
-                ],
+                    if (baselineComparison != null)
+                      Text(
+                        baselineComparison!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.textTertiary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(6),
               ),
-            ],
-          ),
+              child: const Text(
+                'Estimated',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -146,23 +146,46 @@ class DashboardScreen extends StatelessWidget {
             a.type == AnomalyType.warning || a.type == AnomalyType.positive)
         .toList();
 
+    // Map signal IDs → whether they come from a live sensor.
+    final liveStatus = <String, bool>{
+      'sleep': healthProvider.isAvailable,
+      'screen': screenTimeProvider.isAvailable,
+      'movement': activityProvider.isAvailable,
+      'focus': screenTimeProvider.isAvailable, // derived from app count
+    };
+
     final allSignals = <BehavioralSignal>[
-      if (pedometer.isAvailable)
+      // Steps — always visible.
+      BehavioralSignal(
+        id: 'steps',
+        label: 'Steps',
+        value: pedometer.isAvailable
+            ? pedometer.stepsToday.toString()
+            : '—',
+        unit: pedometer.isAvailable ? 'steps' : '',
+        trend: pedometer.isAvailable
+            ? (pedometer.stepsToday >= 5000
+                ? SignalTrend.up
+                : pedometer.stepsToday >= 2000
+                    ? SignalTrend.stable
+                    : SignalTrend.down)
+            : SignalTrend.stable,
+        trendIsGood: pedometer.isAvailable && pedometer.stepsToday >= 4000,
+        icon: 'steps',
+        isLive: pedometer.isAvailable,
+      ),
+      // Remaining signals — tag each with its live status.
+      for (final signal in signals)
         BehavioralSignal(
-          id: 'steps',
-          label: 'Steps',
-          value: pedometer.stepsToday.toString(),
-          unit: 'steps',
-          trend: pedometer.stepsToday >= 5000
-              ? SignalTrend.up
-              : pedometer.stepsToday >= 2000
-                  ? SignalTrend.stable
-                  : SignalTrend.down,
-          trendIsGood: pedometer.stepsToday >= 4000,
-          icon: 'steps',
-          isLive: true,
+          id: signal.id,
+          label: signal.label,
+          value: signal.value,
+          unit: signal.unit,
+          trend: signal.trend,
+          trendIsGood: signal.trendIsGood,
+          icon: signal.icon,
+          isLive: liveStatus[signal.id] ?? false,
         ),
-      ...signals,
     ];
 
     final topPadding = MediaQuery.of(context).padding.top;

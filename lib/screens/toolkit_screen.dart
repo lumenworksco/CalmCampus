@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/interventions_data.dart';
 import '../models/breathing_pattern.dart';
 import '../models/daily_data.dart';
+import '../providers/activity_provider.dart';
+import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
+import '../providers/screen_time_provider.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/breathing_exercise.dart';
@@ -70,7 +73,26 @@ class ToolkitScreen extends StatelessWidget {
     final topPad = MediaQuery.of(context).padding.top;
     final repo = context.watch<WellnessRepository>();
     final pedometer = context.watch<PedometerProvider>();
-    final data = repo.getTodayData(realSteps: pedometer.stepsToday);
+    final healthProvider = context.watch<HealthProvider>();
+    final screenTimeProvider = context.watch<ScreenTimeProvider>();
+    final activityProvider = context.watch<ActivityProvider>();
+
+    final realSteps = pedometer.isAvailable ? pedometer.stepsToday : null;
+    final realSleep = healthProvider.isAvailable ? healthProvider.sleepHours : null;
+    final realScreenTime =
+        screenTimeProvider.isAvailable ? screenTimeProvider.screenTimeHours : null;
+    final realActiveMinutes =
+        activityProvider.isAvailable ? activityProvider.activeMinutes : null;
+    final realAppCount =
+        screenTimeProvider.isAvailable ? screenTimeProvider.appCount : null;
+
+    final data = repo.getTodayData(
+      realSteps: realSteps,
+      realSleepHours: realSleep,
+      realScreenTimeHours: realScreenTime,
+      realActiveMinutes: realActiveMinutes,
+      realAppCount: realAppCount,
+    );
     final recs = _getRecommendations(data);
 
     return SingleChildScrollView(
