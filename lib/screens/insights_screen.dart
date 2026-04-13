@@ -6,13 +6,21 @@ import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
+import '../services/ai_insight_service.dart';
 import '../services/baseline_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/trend_chart.dart';
 
-class InsightsScreen extends StatelessWidget {
+class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
+
+  @override
+  State<InsightsScreen> createState() => _InsightsScreenState();
+}
+
+class _InsightsScreenState extends State<InsightsScreen> {
+  bool _aiRequested = false;
 
 
   @override
@@ -45,7 +53,16 @@ class InsightsScreen extends StatelessWidget {
         realAppCount: realAppCount,
       );
     }
-    final insight = getSmartInsight(realSteps: realSteps, history: weeklyData);
+    final aiService = context.watch<AiInsightService>();
+    final fallbackInsight = getSmartInsight(realSteps: realSteps, history: weeklyData);
+
+    // Request AI insight once per screen visit.
+    if (!_aiRequested && aiService.isAvailable) {
+      _aiRequested = true;
+      aiService.generate(weeklyData, realSteps: realSteps);
+    }
+
+    final insight = aiService.cached ?? fallbackInsight;
     final labels = weeklyData.map((d) => d.dayLabel).toList();
     final baselineMetrics = baseline.get7DayBaseline();
 
@@ -117,22 +134,56 @@ class InsightsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Summary',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
+                        Row(
+                          children: [
+                            const Text(
+                              'Summary',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            if (aiService.isAvailable) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'AI',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          insight,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: AppColors.textSecondary,
-                            height: 1.5,
-                          ),
+                        if (aiService.isGenerating && aiService.cached == null)
+                          const Text(
+                            'Analyzing your week...',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.textTertiary,
+                              height: 1.5,
+                            ),
+                          )
+                        else
+                          Text(
+                            insight,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: AppColors.textSecondary,
+                              height: 1.5,
+                            ),
                         ),
                       ],
                     ),

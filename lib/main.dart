@@ -7,6 +7,7 @@ import 'providers/app_state.dart';
 import 'providers/health_provider.dart';
 import 'providers/pedometer_provider.dart';
 import 'providers/screen_time_provider.dart';
+import 'services/ai_insight_service.dart';
 import 'services/baseline_service.dart';
 import 'services/wellness_repository.dart';
 
@@ -38,6 +39,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ScreenTimeProvider()..init()),
         ChangeNotifierProvider(create: (_) => ActivityProvider()..init()),
         ChangeNotifierProvider.value(value: repo),
+        ChangeNotifierProvider(create: (_) => AiInsightService()),
         Provider(create: (_) => BaselineService(repo)),
       ],
       child: const CalmCampusApp(),
