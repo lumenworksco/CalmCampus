@@ -14,14 +14,13 @@
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
 
-    <!-- Required to reach a local Ollama server on the user's network (HTTP). -->
+    <!-- Required to reach the Groq cloud AI API over HTTPS. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="Calm Campus"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

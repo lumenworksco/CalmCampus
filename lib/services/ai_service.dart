@@ -9,38 +9,41 @@ import '../data/data_engine.dart';
 import '../data/mood_data.dart';
 import '../models/daily_data.dart';
 
-/// Unified local-AI service backed by Ollama (https://ollama.com).
+/// Cloud AI service backed by Groq's OpenAI-compatible chat completion API.
 ///
-/// Runs Ollama on a machine reachable from the phone (your laptop on the
-/// same Wi-Fi, or the emulator host). Default endpoint:
+/// Get a free API key at https://console.groq.com (email signup, no card).
 ///
-///   - Android emulator:  10.0.2.2:11434  (maps to host localhost)
-///   - iOS simulator / macOS: localhost:11434
-///   - Physical device: override via Settings → AI with the LAN IP
-///     of the computer running `ollama serve`.
+/// Supply the key one of two ways:
+///   - Build time: `flutter run --dart-define=GROQ_API_KEY=gsk_...`
+///   - Runtime:    Settings → AI → API Key
 ///
-/// Build-time overrides (optional):
-///   flutter run --dart-define=OLLAMA_HOST=192.168.1.42:11434 \
-///               --dart-define=OLLAMA_MODEL=llama3.2:3b
+/// The service is OpenAI-compatible, so switching to Hugging Face (or any
+/// other compatible router) later is a URL + model change in one place —
+/// [_baseUrl] and [_buildModel].
 ///
-/// Every method returns null / empty when Ollama is unreachable, so callers
-/// transparently fall back to static content.
-class OllamaService extends ChangeNotifier {
-  static const _buildHost = String.fromEnvironment('OLLAMA_HOST');
+/// Every method returns null / empty when no key is set or the call fails,
+/// so callers transparently fall back to static content.
+class AiService extends ChangeNotifier {
+  // ── Endpoint ──
+  static const _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+  // ── Build-time config ──
+  static const _buildApiKey = String.fromEnvironment('GROQ_API_KEY');
   static const _buildModel = String.fromEnvironment(
-    'OLLAMA_MODEL',
-    defaultValue: 'llama3.2:3b',
+    'GROQ_MODEL',
+    defaultValue: 'llama-3.3-70b-versatile',
   );
 
-  static const _prefHost = 'ollama_host';
-  static const _prefModel = 'ollama_model';
+  // ── SharedPreferences keys ──
+  static const _prefApiKey = 'groq_api_key';
+  static const _prefModel = 'groq_model';
 
-  String _host = '';
+  String _apiKey = '';
   String _model = _buildModel;
   bool _initialized = false;
-  bool _reachable = false;
+  String? _lastError;
 
-  // ── Caches (per-day, same shape the UI already uses) ──
+  // ── Per-day caches (same shape UI already consumes) ──
   String? _insightCache;
   String? _insightCacheDate;
   bool _isGeneratingInsight = false;
@@ -51,54 +54,60 @@ class OllamaService extends ChangeNotifier {
   Map<String, String>? _anomalyRewrites;
   String? _anomalyRewritesDate;
 
-  OllamaService() {
+  AiService() {
     _loadSettings();
   }
 
   // ── Public getters ──
-  String get host => _host;
-  String get model => _model;
   bool get isInitialized => _initialized;
-  bool get isAvailable => _initialized && _reachable;
+  bool get hasKey => _apiKey.isNotEmpty;
+  bool get isAvailable => _initialized && hasKey && _lastError == null;
+  String? get lastError => _lastError;
+  String get model => _model;
+  String get maskedKey {
+    if (_apiKey.isEmpty) return 'Not set';
+    if (_apiKey.length <= 8) return '••••';
+    return '${_apiKey.substring(0, 4)}…${_apiKey.substring(_apiKey.length - 4)}';
+  }
+
   bool get isGeneratingInsight => _isGeneratingInsight;
   String? get cachedInsight => _insightCache;
   Map<String, String>? get toolReasons => _toolReasons;
   Map<String, String>? get anomalyRewrites => _anomalyRewrites;
 
-  String get defaultHost {
-    if (_buildHost.isNotEmpty) return _buildHost;
-    if (!kIsWeb && Platform.isAndroid) return '10.0.2.2:11434';
-    return 'localhost:11434';
-  }
-
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _host = prefs.getString(_prefHost) ?? defaultHost;
-      _model = prefs.getString(_prefModel) ?? _buildModel;
+      final savedKey = prefs.getString(_prefApiKey);
+      final savedModel = prefs.getString(_prefModel);
+      // Build-time key wins over pref (handy for demos).
+      _apiKey = _buildApiKey.isNotEmpty ? _buildApiKey : (savedKey ?? '');
+      _model = savedModel ?? _buildModel;
     } catch (_) {
-      _host = defaultHost;
+      _apiKey = _buildApiKey;
       _model = _buildModel;
     }
     _initialized = true;
     notifyListeners();
-    unawaited(_checkHealth());
   }
 
-  Future<void> setHost(String host) async {
-    _host = host.trim();
+  Future<void> setApiKey(String key) async {
+    _apiKey = key.trim();
+    _lastError = null;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_prefHost, _host);
+      if (_apiKey.isEmpty) {
+        await prefs.remove(_prefApiKey);
+      } else {
+        await prefs.setString(_prefApiKey, _apiKey);
+      }
     } catch (_) {}
     _invalidateCaches();
-    _reachable = false;
     notifyListeners();
-    unawaited(_checkHealth());
   }
 
   Future<void> setModel(String model) async {
-    _model = model.trim();
+    _model = model.trim().isEmpty ? _buildModel : model.trim();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefModel, _model);
@@ -116,77 +125,74 @@ class OllamaService extends ChangeNotifier {
     _anomalyRewritesDate = null;
   }
 
-  /// Pings `/api/tags` to see if Ollama is reachable. Call from the settings
-  /// screen or before making a request. Updates [isAvailable].
-  Future<bool> ping() => _checkHealth();
-
-  Future<bool> _checkHealth() async {
-    if (_host.isEmpty) {
-      _reachable = false;
+  /// Round-trip a short probe to confirm key + network work.
+  /// Returns true on HTTP 200, false (with [lastError] set) otherwise.
+  Future<bool> ping() async {
+    if (!hasKey) {
+      _lastError = 'No API key';
       notifyListeners();
       return false;
     }
-    HttpClient? client;
-    try {
-      client = HttpClient()
-        ..connectionTimeout = const Duration(seconds: 2);
-      final req = await client.getUrl(Uri.parse('http://$_host/api/tags'));
-      final resp = await req.close().timeout(const Duration(seconds: 3));
-      _reachable = resp.statusCode == 200;
-      // Drain to free the socket.
-      await resp.drain<void>();
-    } catch (e) {
-      _reachable = false;
-      debugPrint('Ollama health check failed: $e');
-    } finally {
-      client?.close(force: true);
-    }
-    notifyListeners();
-    return _reachable;
+    final result = await _call('Reply with the single word: ok');
+    return result != null;
   }
 
-  /// Core HTTP call — POSTs to `/api/generate` and returns the trimmed
-  /// `response` field, or null on any failure.
+  /// Core HTTP call — POSTs a single user-message chat completion and returns
+  /// the trimmed assistant text, or null on any failure. Updates [_lastError].
   Future<String?> _call(String prompt) async {
-    if (!_initialized) return null;
-    if (!_reachable) {
-      final ok = await _checkHealth();
-      if (!ok) return null;
-    }
+    if (!_initialized || !hasKey) return null;
 
     HttpClient? client;
     try {
       client = HttpClient()
-        ..connectionTimeout = const Duration(seconds: 5);
-      final req =
-          await client.postUrl(Uri.parse('http://$_host/api/generate'));
+        ..connectionTimeout = const Duration(seconds: 10);
+      final req = await client.postUrl(Uri.parse(_baseUrl));
       req.headers.contentType = ContentType.json;
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_apiKey');
       req.add(utf8.encode(jsonEncode({
         'model': _model,
-        'prompt': prompt,
-        'stream': false,
-        'options': {
-          'temperature': 0.7,
-          'num_predict': 250,
-        },
+        'messages': [
+          {'role': 'user', 'content': prompt},
+        ],
+        'temperature': 0.7,
+        'max_tokens': 250,
       })));
-      final resp = await req.close().timeout(const Duration(seconds: 60));
+      final resp = await req.close().timeout(const Duration(seconds: 30));
+      final body = await resp.transform(utf8.decoder).join();
+
       if (resp.statusCode != 200) {
-        debugPrint('Ollama error ${resp.statusCode}');
-        await resp.drain<void>();
+        _lastError = _parseError(resp.statusCode, body);
+        debugPrint('AiService ${resp.statusCode}: $body');
+        notifyListeners();
         return null;
       }
-      final body = await resp.transform(utf8.decoder).join();
+
+      _lastError = null;
       final obj = jsonDecode(body) as Map<String, dynamic>;
-      return (obj['response'] as String?)?.trim();
+      final choices = obj['choices'] as List?;
+      if (choices == null || choices.isEmpty) return null;
+      final msg = (choices.first as Map)['message'] as Map?;
+      final text = msg?['content'] as String?;
+      return text?.trim();
     } catch (e) {
-      debugPrint('OllamaService: $e');
-      _reachable = false;
+      _lastError = e.toString();
+      debugPrint('AiService: $e');
       notifyListeners();
       return null;
     } finally {
       client?.close(force: true);
     }
+  }
+
+  String _parseError(int status, String body) {
+    try {
+      final obj = jsonDecode(body) as Map<String, dynamic>;
+      final err = obj['error'];
+      if (err is Map && err['message'] is String) {
+        return '$status: ${err['message']}';
+      }
+    } catch (_) {}
+    return 'HTTP $status';
   }
 
   // ─────────────────────────────────────────────────────────────────────────

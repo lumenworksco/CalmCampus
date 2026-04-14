@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 
@@ -34,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final repo = context.watch<WellnessRepository>();
-    final ollama = context.watch<OllamaService>();
+    final ai = context.watch<AiService>();
     final topPadding = MediaQuery.of(context).padding.top;
 
     return CupertinoScrollbar(
@@ -115,39 +115,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ]),
 
-            // -- Local AI section --
-            _sectionLabel('LOCAL AI'),
+            // -- AI section --
+            _sectionLabel('AI'),
             _groupedCard([
               _infoRow(
                 'Status',
-                ollama.isAvailable
-                    ? 'Connected'
-                    : (ollama.isInitialized ? 'Not reachable' : 'Checking...'),
+                !ai.isInitialized
+                    ? 'Loading...'
+                    : !ai.hasKey
+                        ? 'No API key'
+                        : ai.lastError != null
+                            ? 'Error'
+                            : 'Ready',
               ),
               _separator(),
               _tappableRow(
-                label: 'Host',
-                trailing: ollama.host,
-                onTap: () => _editOllamaHost(context, ollama),
+                label: 'API Key',
+                trailing: ai.maskedKey,
+                onTap: () => _editApiKey(context, ai),
               ),
               _separator(),
               _tappableRow(
                 label: 'Model',
-                trailing: ollama.model,
-                onTap: () => _editOllamaModel(context, ollama),
+                trailing: ai.model,
+                onTap: () => _editModel(context, ai),
               ),
               _separator(),
               _tappableRow(
                 label: 'Test connection',
-                onTap: () => _testOllama(context, ollama),
+                onTap: () => _testAi(context, ai),
                 isLast: true,
               ),
             ]),
             _footer(
-              'AI features run on a local Ollama server. Install Ollama on '
-              'your computer (ollama.com), run "ollama pull ${ollama.model}", '
-              'then enter your computer\'s LAN IP above (e.g. 192.168.1.42:11434). '
-              'Nothing is sent to the cloud.',
+              'AI features use Groq, a free cloud API (14,400 req/day). '
+              'Sign up at console.groq.com, paste your API key above. Your '
+              'key is stored only on this device.',
             ),
 
             // -- Data Management section --
@@ -223,21 +226,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _editOllamaHost(
-      BuildContext context, OllamaService ollama) async {
-    final controller = TextEditingController(text: ollama.host);
-    final newHost = await showCupertinoDialog<String>(
+  Future<void> _editApiKey(BuildContext context, AiService ai) async {
+    final controller = TextEditingController();
+    final newKey = await showCupertinoDialog<String>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Ollama Host'),
+        title: const Text('Groq API Key'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
-            controller: controller,
-            autofocus: true,
-            placeholder: 'e.g. 192.168.1.42:11434',
-            keyboardType: TextInputType.url,
-            autocorrect: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CupertinoTextField(
+                controller: controller,
+                autofocus: true,
+                placeholder: 'gsk_...',
+                keyboardType: TextInputType.visiblePassword,
+                autocorrect: false,
+                obscureText: true,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Get a free key at console.groq.com',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -245,6 +261,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
+          if (ai.hasKey)
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Navigator.pop(ctx, ''),
+              child: const Text('Remove'),
+            ),
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, controller.text),
             child: const Text('Save'),
@@ -252,25 +274,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-    if (newHost != null && newHost.trim().isNotEmpty) {
-      await ollama.setHost(newHost);
+    if (newKey != null) {
+      await ai.setApiKey(newKey);
     }
   }
 
-  Future<void> _editOllamaModel(
-      BuildContext context, OllamaService ollama) async {
-    final controller = TextEditingController(text: ollama.model);
+  Future<void> _editModel(BuildContext context, AiService ai) async {
+    final controller = TextEditingController(text: ai.model);
     final newModel = await showCupertinoDialog<String>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Ollama Model'),
+        title: const Text('Model'),
         content: Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: CupertinoTextField(
-            controller: controller,
-            autofocus: true,
-            placeholder: 'e.g. llama3.2:3b',
-            autocorrect: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CupertinoTextField(
+                controller: controller,
+                autofocus: true,
+                placeholder: 'llama-3.3-70b-versatile',
+                autocorrect: false,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'e.g. llama-3.3-70b-versatile, llama-3.1-8b-instant',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -286,23 +320,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (newModel != null && newModel.trim().isNotEmpty) {
-      await ollama.setModel(newModel);
+      await ai.setModel(newModel);
     }
   }
 
-  Future<void> _testOllama(BuildContext context, OllamaService ollama) async {
-    final reachable = await ollama.ping();
+  Future<void> _testAi(BuildContext context, AiService ai) async {
+    final ok = await ai.ping();
     if (!context.mounted) return;
     showCupertinoDialog(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: Text(reachable ? 'Connected' : 'Not reachable'),
+        title: Text(ok ? 'Connected' : 'Failed'),
         content: Text(
-          reachable
-              ? 'Ollama is running at ${ollama.host} and ready to use.'
-              : 'Could not reach Ollama at ${ollama.host}. Make sure '
-                  '"ollama serve" is running and your phone can reach '
-                  'that address.',
+          ok
+              ? 'AI is reachable and your key works. Ready to generate '
+                  'insights and suggestions.'
+              : ai.lastError ??
+                  'Could not reach Groq. Check your API key and internet '
+                      'connection.',
         ),
         actions: [
           CupertinoDialogAction(

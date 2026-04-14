@@ -66,13 +66,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Calm Campus connects to Ollama running on your local network so all AI stays private on your own machine.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Calm Campus uses motion data to count your daily steps and detect activity for wellness tracking. All data stays on your device.</string>
 	<key>NSHealthShareUsageDescription</key>

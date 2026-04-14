@@ -10,7 +10,7 @@ import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/breathing_exercise.dart';
@@ -87,7 +87,7 @@ class ToolkitScreen extends StatelessWidget {
     final realAppCount =
         screenTimeProvider.isAvailable ? screenTimeProvider.appCount : null;
 
-    final gemini = context.watch<OllamaService>();
+    final gemini = context.watch<AiService>();
 
     final data = repo.getTodayData(
       realSteps: realSteps,

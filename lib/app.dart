@@ -14,8 +14,10 @@ class CalmCampusApp extends StatelessWidget {
       title: 'Calm Campus',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      // The UI is designed as a light iOS aesthetic — text colors are
+      // hard-coded light-mode values across the app. Force light mode until
+      // we do a proper dark-theme pass.
+      themeMode: ThemeMode.light,
       home: Consumer<AppState>(
         builder: (context, appState, _) {
           if (appState.hasOnboarded) {

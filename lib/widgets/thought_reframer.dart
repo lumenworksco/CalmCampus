@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../theme/app_colors.dart';
 
 /// Three-step CBT thought record exercise.
@@ -53,7 +53,7 @@ class _ThoughtReframerState extends State<ThoughtReframer> {
   }
 
   void _fetchReframes() {
-    final gemini = context.read<OllamaService>();
+    final gemini = context.read<AiService>();
     if (!gemini.isAvailable) return;
 
     setState(() => _isLoadingSuggestions = true);

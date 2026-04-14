@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/mood_picker.dart';
 
@@ -64,7 +64,7 @@ class _CheckinSheetState extends State<CheckinSheet> {
   Future<void> _save() async {
     widget.onComplete(_selectedMood!, _selectedEnergy!);
 
-    final gemini = context.read<OllamaService>();
+    final gemini = context.read<AiService>();
     if (gemini.isAvailable) {
       final text =
           await gemini.generateAffirmation(_selectedMood!, _selectedEnergy!);

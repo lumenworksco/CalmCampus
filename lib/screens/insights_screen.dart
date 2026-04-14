@@ -6,7 +6,7 @@ import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../services/baseline_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
@@ -53,7 +53,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         realAppCount: realAppCount,
       );
     }
-    final aiService = context.watch<OllamaService>();
+    final aiService = context.watch<AiService>();
     final fallbackInsight = getSmartInsight(realSteps: realSteps, history: weeklyData);
 
     // Request AI insight once per screen visit.

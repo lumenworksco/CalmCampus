@@ -13,7 +13,7 @@ import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
 import '../screens/checkin_sheet.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/crisis_banner.dart';
@@ -126,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final screenTimeProvider = context.watch<ScreenTimeProvider>();
     final activityProvider = context.watch<ActivityProvider>();
     final repo = context.watch<WellnessRepository>();
-    final gemini = context.watch<OllamaService>();
+    final gemini = context.watch<AiService>();
 
     final realSteps = pedometer.isAvailable ? pedometer.stepsToday : null;
     final realSleep = healthProvider.isAvailable ? healthProvider.sleepHours : null;

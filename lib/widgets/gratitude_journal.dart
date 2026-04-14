@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../services/ollama_service.dart';
+import '../services/ai_service.dart';
 import '../theme/app_colors.dart';
 
 class GratitudeJournal extends StatefulWidget {
@@ -48,7 +48,7 @@ class _GratitudeJournalState extends State<GratitudeJournal> {
   bool get _hasText => _controller.text.trim().isNotEmpty;
 
   void _fetchFollowUp(String entry) {
-    final gemini = context.read<OllamaService>();
+    final gemini = context.read<AiService>();
     if (!gemini.isAvailable) return;
 
     gemini.generateGratitudePrompt(entry).then((result) {
