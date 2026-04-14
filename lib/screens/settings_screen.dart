@@ -52,7 +52,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      child: SafeArea(
+      // Material(transparent) gives every Text inside a proper DefaultTextStyle
+      // so Flutter doesn't draw the debug "no Material ancestor" yellow
+      // double-underline under every string on the page.
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
         bottom: false,
         child: CupertinoScrollbar(
           child: SingleChildScrollView(
@@ -229,6 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

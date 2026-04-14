@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +8,11 @@ import '../theme/app_colors.dart';
 import '../widgets/mood_picker.dart';
 
 class CheckinSheet extends StatefulWidget {
-  final void Function(int mood, int energy) onComplete;
+  /// Fired when the user taps Save. If the callback returns a `Future`, the
+  /// sheet awaits it before running the affirmation / pop sequence so that
+  /// the dashboard reflects the persisted check-in the moment the sheet
+  /// closes.
+  final FutureOr<void> Function(int mood, int energy) onComplete;
   final int? initialMood;
   final int? initialEnergy;
 
@@ -20,7 +26,7 @@ class CheckinSheet extends StatefulWidget {
   /// Shows this sheet as a Cupertino-style modal popup.
   static Future<void> show(
     BuildContext context, {
-    required void Function(int mood, int energy) onComplete,
+    required FutureOr<void> Function(int mood, int energy) onComplete,
     int? initialMood,
     int? initialEnergy,
   }) {
@@ -62,7 +68,12 @@ class _CheckinSheetState extends State<CheckinSheet> {
   bool get _canSave => _selectedMood != null && _selectedEnergy != null;
 
   Future<void> _save() async {
-    widget.onComplete(_selectedMood!, _selectedEnergy!);
+    // Await the save so the dashboard's repo has fired `notifyListeners`
+    // before we close this sheet. Previously this was fire-and-forget, which
+    // could leave the home screen stuck on the pre-check-in prompt if the
+    // affirmation / pop happened to beat the Hive write.
+    await widget.onComplete(_selectedMood!, _selectedEnergy!);
+    if (!mounted) return;
 
     final gemini = context.read<AiService>();
     if (gemini.isAvailable) {

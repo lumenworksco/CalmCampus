@@ -563,9 +563,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showCheckinSheet(BuildContext context, WellnessRepository repo) {
     CheckinSheet.show(
       context,
-      onComplete: (mood, energy) {
-        repo.saveCheckin(mood: mood, energy: energy);
-      },
+      // Return the Future so the sheet awaits Hive's write before closing —
+      // this guarantees the dashboard's `hasCheckinToday()` reads the new
+      // mood when the sheet pops.
+      onComplete: (mood, energy) =>
+          repo.saveCheckin(mood: mood, energy: energy),
     );
   }
 }

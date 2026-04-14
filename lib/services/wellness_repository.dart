@@ -112,12 +112,29 @@ class WellnessRepository extends ChangeNotifier {
   }
 
   /// Save check-in data (mood, energy) for today.
-  Future<void> saveCheckin({required int mood, required int energy}) async {
-    final dateStr = _todayStr();
-    var data = getTodayData();
-    data = data.copyWith(moodRating: mood, energyRating: energy);
-    await _box?.put(dateStr, data.toMap());
-    notifyListeners();
+  ///
+  /// Returns `true` on success, `false` if the underlying Hive box isn't
+  /// open. Callers that want to update UI immediately should `await` this.
+  Future<bool> saveCheckin({required int mood, required int energy}) async {
+    final box = _box;
+    if (box == null || !_isInitialized) {
+      debugPrint(
+        'WellnessRepository.saveCheckin: box not initialized — '
+        'check-in cannot be persisted.',
+      );
+      return false;
+    }
+    try {
+      final dateStr = _todayStr();
+      var data = getTodayData();
+      data = data.copyWith(moodRating: mood, energyRating: energy);
+      await box.put(dateStr, data.toMap());
+      notifyListeners();
+      return true;
+    } catch (e, st) {
+      debugPrint('WellnessRepository.saveCheckin failed: $e\n$st');
+      return false;
+    }
   }
 
   /// Save gratitude entry for today.
