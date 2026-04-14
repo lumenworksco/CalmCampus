@@ -9,6 +9,7 @@ import 'providers/pedometer_provider.dart';
 import 'providers/screen_time_provider.dart';
 import 'services/ai_service.dart';
 import 'services/baseline_service.dart';
+import 'services/notification_service.dart';
 import 'services/wellness_repository.dart';
 
 void main() async {
@@ -30,6 +31,18 @@ void main() async {
     debugPrint('WellnessRepository init failed: $e');
   }
 
+  final notifications = NotificationService.instance;
+  try {
+    await notifications.init();
+    // Re-arm the daily check-in on every cold start so that time-zone /
+    // device-reboot changes don't silently drop it.
+    if (appState.notificationsEnabled && appState.checkinReminderEnabled) {
+      await notifications.scheduleDailyCheckin(appState.checkinReminderTime);
+    }
+  } catch (e) {
+    debugPrint('NotificationService init failed: $e');
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -40,6 +53,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ActivityProvider()..init()),
         ChangeNotifierProvider.value(value: repo),
         ChangeNotifierProvider(create: (_) => AiService()),
+        ChangeNotifierProvider.value(value: notifications),
         Provider(create: (_) => BaselineService(repo)),
       ],
       child: const CalmCampusApp(),

@@ -1,41 +1,30 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import '../services/ai_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
+import 'settings_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  String _version = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVersion();
-  }
-
-  Future<void> _loadVersion() async {
-    final info = await PackageInfo.fromPlatform();
-    if (mounted) {
-      setState(() => _version = '${info.version} (${info.buildNumber})');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final repo = context.watch<WellnessRepository>();
-    final ai = context.watch<AiService>();
     final topPadding = MediaQuery.of(context).padding.top;
+
+    final streak = repo.getStreak();
+    final longestStreak = repo.getLongestStreak();
+    final totalCheckins = repo.getTotalCheckins();
+    final gratitudeEntries = repo.getTotalGratitudeEntries();
+    final daysTracked = repo.getDaysTracked();
+
+    final displayName =
+        appState.userName.isEmpty ? 'Student' : appState.userName;
+    final memberSince = appState.memberSince ?? DateTime.now();
 
     return CupertinoScrollbar(
       child: SingleChildScrollView(
@@ -45,152 +34,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // -- Large title header --
+            // -- Header with settings gear --
             Padding(
               padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 0),
-              child: const Text(
-                'Settings',
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.text,
-                  letterSpacing: 0.4,
-                ),
-              ),
-            ),
-
-            // -- Privacy section --
-            _sectionLabel('PRIVACY'),
-            _groupedCard([
-              _infoRow('Data processing', 'On-device only'),
-              _separator(),
-              _infoRow('Cloud storage', 'None'),
-              _separator(),
-              _infoRow('GDPR compliant', 'Yes'),
-            ]),
-            _footer(
-              'All behavioral data is processed locally on your device. '
-              'No personal data ever leaves your phone.',
-            ),
-
-            // -- Notifications section --
-            _sectionLabel('NOTIFICATIONS'),
-            _groupedCard([
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wellness nudges',
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: AppColors.text,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Gentle alerts when stress is detected (coming soon)',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                        letterSpacing: 0.4,
                       ),
                     ),
-                    CupertinoSwitch(
-                      value: appState.notificationsEnabled,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (v) => appState.setNotificationsEnabled(v),
+                  ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _openSettings(context),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        CupertinoIcons.gear,
+                        size: 20,
+                        color: AppColors.text,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ]),
-
-            // -- AI section --
-            _sectionLabel('AI'),
-            _groupedCard([
-              _infoRow(
-                'Status',
-                !ai.isInitialized
-                    ? 'Loading...'
-                    : !ai.hasKey
-                        ? 'No API key'
-                        : ai.lastError != null
-                            ? 'Error'
-                            : 'Ready',
-              ),
-              _separator(),
-              _tappableRow(
-                label: 'API Key',
-                trailing: ai.maskedKey,
-                onTap: () => _editApiKey(context, ai),
-              ),
-              _separator(),
-              _tappableRow(
-                label: 'Model',
-                trailing: ai.model,
-                onTap: () => _editModel(context, ai),
-              ),
-              _separator(),
-              _tappableRow(
-                label: 'Test connection',
-                onTap: () => _testAi(context, ai),
-                isLast: true,
-              ),
-            ]),
-            _footer(
-              'AI features use Groq, a free cloud API (14,400 req/day). '
-              'Sign up at console.groq.com, paste your API key above. Your '
-              'key is stored only on this device.',
             ),
 
-            // -- Data Management section --
-            _sectionLabel('DATA MANAGEMENT'),
-            _groupedCard([
-              _tappableRow(
-                label: 'Reset Onboarding',
-                onTap: () => _confirmResetOnboarding(context, appState),
-                isFirst: true,
-              ),
-              _separator(),
-              _tappableRow(
-                label: 'Clear All Data',
-                onTap: () => _confirmClearData(context, repo),
-                isDestructive: true,
-                isLast: true,
-              ),
-            ]),
-            _footer(
-              'Resetting onboarding will show the welcome screens again. '
-              'Clearing data removes all wellness entries.',
+            const SizedBox(height: 24),
+
+            // -- Avatar + name card --
+            _avatarCard(
+              context,
+              displayName: displayName,
+              memberSince: memberSince,
+              onEditName: () => _editName(context, appState),
             ),
 
-            // -- About section --
-            _sectionLabel('ABOUT'),
+            // -- Stats --
+            _sectionLabel('STATS'),
             _groupedCard([
-              _infoRow('Version', _version.isEmpty ? '...' : _version),
+              _statRow(
+                icon: CupertinoIcons.flame_fill,
+                iconColor: AppColors.warning,
+                label: 'Current streak',
+                value: streak == 1 ? '1 day' : '$streak days',
+              ),
               _separator(),
-              _infoRow('Framework', 'CBT & ACT'),
+              _statRow(
+                icon: CupertinoIcons.star_fill,
+                iconColor: const Color(0xFFFFD60A),
+                label: 'Longest streak',
+                value: longestStreak == 1 ? '1 day' : '$longestStreak days',
+              ),
               _separator(),
-              _infoRow('KICK Challenge 2026', ''),
+              _statRow(
+                icon: CupertinoIcons.checkmark_circle_fill,
+                iconColor: AppColors.primary,
+                label: 'Total check-ins',
+                value: totalCheckins.toString(),
+              ),
+              _separator(),
+              _statRow(
+                icon: CupertinoIcons.heart_fill,
+                iconColor: const Color(0xFFFF2D55),
+                label: 'Gratitude entries',
+                value: gratitudeEntries.toString(),
+              ),
+              _separator(),
+              _statRow(
+                icon: CupertinoIcons.calendar,
+                iconColor: AppColors.accent,
+                label: 'Days tracked',
+                value: daysTracked.toString(),
+              ),
             ]),
-            _footer(
-              'Calm Campus detects early signs of student burnout via '
-              'behavioral signals and delivers personalized '
-              'micro-interventions. Built for the KU Leuven KICK Challenge.',
+
+            // -- Achievements --
+            _sectionLabel('ACHIEVEMENTS'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _achievementsGrid(
+                totalCheckins: totalCheckins,
+                longestStreak: longestStreak,
+                gratitudeEntries: gratitudeEntries,
+                currentStreak: streak,
+              ),
             ),
 
-            // -- Bottom padding for tab bar --
-            const SizedBox(height: 100),
+            _footer(
+              'Achievements are earned by maintaining consistent check-ins '
+              'and a healthy wellness score above 70.',
+            ),
+
+            // Bottom padding for tab bar
+            const SizedBox(height: 120),
           ],
         ),
       ),
@@ -198,16 +147,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Dialogs
+  // Navigation
   // ---------------------------------------------------------------------------
 
-  void _confirmResetOnboarding(BuildContext context, AppState appState) {
-    showCupertinoDialog(
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(builder: (_) => const SettingsScreen()),
+    );
+  }
+
+  Future<void> _editName(BuildContext context, AppState appState) async {
+    final controller = TextEditingController(text: appState.userName);
+    final result = await showCupertinoDialog<String>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Reset Onboarding'),
-        content: const Text(
-          'This will show the welcome screens again on next launch.',
+        title: const Text('Your name'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: controller,
+            autofocus: true,
+            placeholder: 'How should we call you?',
+            textCapitalization: TextCapitalization.words,
+            maxLength: 40,
+          ),
         ),
         actions: [
           CupertinoDialogAction(
@@ -215,169 +178,247 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel'),
           ),
           CupertinoDialogAction(
-            onPressed: () {
-              appState.setHasOnboarded(false);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Reset'),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Save'),
           ),
         ],
       ),
     );
+    if (result != null) {
+      await appState.setUserName(result);
+    }
   }
 
-  Future<void> _editApiKey(BuildContext context, AiService ai) async {
-    final controller = TextEditingController();
-    final newKey = await showCupertinoDialog<String>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Groq API Key'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CupertinoTextField(
-                controller: controller,
-                autofocus: true,
-                placeholder: 'gsk_...',
-                keyboardType: TextInputType.visiblePassword,
-                autocorrect: false,
-                obscureText: true,
+  // ---------------------------------------------------------------------------
+  // Building blocks
+  // ---------------------------------------------------------------------------
+
+  Widget _avatarCard(
+    BuildContext context, {
+    required String displayName,
+    required DateTime memberSince,
+    required VoidCallback onEditName,
+  }) {
+    final initials = _initialsOf(displayName);
+    final since = DateFormat('MMMM yyyy').format(memberSince);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onEditName,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    AppColors.accent,
+                    Color(0xFF5AC8FA),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(32),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Get a free key at console.groq.com',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textTertiary,
+              alignment: Alignment.center,
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.white,
                 ),
               ),
-            ],
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          if (ai.hasKey)
-            CupertinoDialogAction(
-              isDestructiveAction: true,
-              onPressed: () => Navigator.pop(ctx, ''),
-              child: const Text('Remove'),
             ),
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    if (newKey != null) {
-      await ai.setApiKey(newKey);
-    }
-  }
-
-  Future<void> _editModel(BuildContext context, AiService ai) async {
-    final controller = TextEditingController(text: ai.model);
-    final newModel = await showCupertinoDialog<String>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Model'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CupertinoTextField(
-                controller: controller,
-                autofocus: true,
-                placeholder: 'llama-3.3-70b-versatile',
-                autocorrect: false,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Member since $since',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'e.g. llama-3.3-70b-versatile, llama-3.1-8b-instant',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textTertiary,
-                ),
+            ),
+            const Icon(
+              CupertinoIcons.pencil,
+              size: 18,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _achievementsGrid({
+    required int totalCheckins,
+    required int longestStreak,
+    required int gratitudeEntries,
+    required int currentStreak,
+  }) {
+    final achievements = <_Achievement>[
+      _Achievement(
+        icon: CupertinoIcons.checkmark_seal_fill,
+        label: 'First check-in',
+        unlocked: totalCheckins >= 1,
+        color: AppColors.primary,
+      ),
+      _Achievement(
+        icon: CupertinoIcons.flame_fill,
+        label: '3-day streak',
+        unlocked: longestStreak >= 3,
+        color: AppColors.warning,
+      ),
+      _Achievement(
+        icon: CupertinoIcons.sparkles,
+        label: '7-day streak',
+        unlocked: longestStreak >= 7,
+        color: const Color(0xFFFF9500),
+      ),
+      _Achievement(
+        icon: CupertinoIcons.star_circle_fill,
+        label: '10 check-ins',
+        unlocked: totalCheckins >= 10,
+        color: const Color(0xFFFFD60A),
+      ),
+      _Achievement(
+        icon: CupertinoIcons.rosette,
+        label: '30-day streak',
+        unlocked: longestStreak >= 30,
+        color: const Color(0xFFAF52DE),
+      ),
+      _Achievement(
+        icon: CupertinoIcons.heart_fill,
+        label: 'First gratitude',
+        unlocked: gratitudeEntries >= 1,
+        color: const Color(0xFFFF2D55),
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
+      itemCount: achievements.length,
+      itemBuilder: (_, i) => _achievementTile(achievements[i]),
+    );
+  }
+
+  Widget _achievementTile(_Achievement a) {
+    final opacity = a.unlocked ? 1.0 : 0.35;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: a.unlocked
+                  ? a.color.withValues(alpha: 0.15)
+                  : AppColors.background,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            alignment: Alignment.center,
+            child: Opacity(
+              opacity: opacity,
+              child: Icon(
+                a.icon,
+                size: 24,
+                color: a.unlocked ? a.color : AppColors.textTertiary,
               ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    if (newModel != null && newModel.trim().isNotEmpty) {
-      await ai.setModel(newModel);
-    }
-  }
-
-  Future<void> _testAi(BuildContext context, AiService ai) async {
-    final ok = await ai.ping();
-    if (!context.mounted) return;
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(ok ? 'Connected' : 'Failed'),
-        content: Text(
-          ok
-              ? 'AI is reachable and your key works. Ready to generate '
-                  'insights and suggestions.'
-              : ai.lastError ??
-                  'Could not reach Groq. Check your API key and internet '
-                      'connection.',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+          const SizedBox(height: 8),
+          Text(
+            a.label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: a.unlocked
+                  ? AppColors.text
+                  : AppColors.textTertiary,
+              height: 1.2,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _confirmClearData(BuildContext context, WellnessRepository repo) {
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Clear All Data'),
-        content: const Text(
-          'This will delete all your wellness data. This cannot be undone.',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+  Widget _statRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 16, color: iconColor),
           ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              repo.clearAll();
-              Navigator.pop(ctx);
-            },
-            child: const Text('Delete All'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 17, color: AppColors.text),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.text,
+            ),
           ),
         ],
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Building blocks -- iOS Settings style
-  // ---------------------------------------------------------------------------
 
   Widget _sectionLabel(String text) {
     return Padding(
@@ -407,7 +448,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _separator() {
     return const Padding(
-      padding: EdgeInsets.only(left: 16),
+      padding: EdgeInsets.only(left: 60),
       child: Divider(
         height: 0.33,
         thickness: 0.33,
@@ -416,89 +457,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 17, color: AppColors.text),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 17,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tappableRow({
-    required String label,
-    required VoidCallback onTap,
-    String? trailing,
-    bool isFirst = false,
-    bool isLast = false,
-    bool isDestructive = false,
-  }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(
-            top: isFirst ? const Radius.circular(12) : Radius.zero,
-            bottom: isLast ? const Radius.circular(12) : Radius.zero,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 17,
-                  color: isDestructive
-                      ? CupertinoColors.destructiveRed
-                      : AppColors.text,
-                ),
-              ),
-            ),
-            if (trailing != null) ...[
-              Flexible(
-                child: Text(
-                  trailing,
-                  textAlign: TextAlign.end,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            const Icon(
-              CupertinoIcons.chevron_right,
-              size: 14,
-              color: AppColors.textTertiary,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _footer(String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 0),
+      padding: const EdgeInsets.fromLTRB(32, 16, 32, 0),
       child: Text(
         text,
         style: const TextStyle(
@@ -509,4 +470,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  String _initialsOf(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return 'S';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    if (parts.length == 1) {
+      return parts[0].substring(0, 1).toUpperCase();
+    }
+    return (parts[0].substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
+  }
+}
+
+class _Achievement {
+  final IconData icon;
+  final String label;
+  final bool unlocked;
+  final Color color;
+
+  const _Achievement({
+    required this.icon,
+    required this.label,
+    required this.unlocked,
+    required this.color,
+  });
 }

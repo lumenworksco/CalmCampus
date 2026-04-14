@@ -9,11 +9,13 @@ import '../data/mood_data.dart';
 import '../models/behavioral_signal.dart';
 import '../models/wellness_anomaly.dart';
 import '../providers/activity_provider.dart';
+import '../providers/app_state.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
 import '../providers/screen_time_provider.dart';
 import '../screens/checkin_sheet.dart';
 import '../services/ai_service.dart';
+import '../services/notification_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/crisis_banner.dart';
@@ -30,6 +32,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _anomalyRewriteRequested = false;
+  int? _lastNotifiedStreak;
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -173,6 +176,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .toList(),
       );
     }
+
+    // Fire local notifications for anomalies & streak milestones.
+    // Deferred to post-frame so we never notify during a build phase.
+    final appState = context.read<AppState>();
+    final notif = context.read<NotificationService>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dispatchNotifications(
+        appState: appState,
+        notif: notif,
+        anomalies: anomalies,
+        streak: streak,
+      );
+    });
 
     // Map signal IDs → whether they come from a live sensor.
     final liveStatus = <String, bool>{
@@ -407,6 +423,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  /// Dispatch any pending notifications (anomaly nudges + streak milestones).
+  ///
+  /// All dedup logic lives in [NotificationService] (per-anomaly-per-day,
+  /// per-milestone-once), so repeatedly calling this is safe.
+  void _dispatchNotifications({
+    required AppState appState,
+    required NotificationService notif,
+    required List<WellnessAnomaly> anomalies,
+    required int streak,
+  }) {
+    if (!appState.notificationsEnabled) return;
+
+    if (appState.wellnessNudgesEnabled) {
+      for (final a in anomalies.where((a) => a.type == AnomalyType.warning)) {
+        notif.showAnomalyNudge(a);
+      }
+    }
+
+    if (appState.streakMilestonesEnabled && streak != _lastNotifiedStreak) {
+      _lastNotifiedStreak = streak;
+      notif.showStreakMilestone(streak);
+    }
   }
 
   Widget _buildCheckinSection(

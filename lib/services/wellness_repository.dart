@@ -188,6 +188,61 @@ class WellnessRepository extends ChangeNotifier {
     return streak;
   }
 
+  /// Longest consecutive run of days with wellness > 70, looking back a year.
+  int getLongestStreak() {
+    final box = _box;
+    if (box == null) return 0;
+    int longest = 0;
+    int current = 0;
+    final now = DateTime.now();
+    for (int i = 365; i >= 0; i--) {
+      final dateStr = _formatDate(now.subtract(Duration(days: i)));
+      final stored = box.get(dateStr);
+      if (stored == null) {
+        current = 0;
+        continue;
+      }
+      final data = DailyData.fromMap(Map<String, dynamic>.from(stored as Map));
+      if (data.wellnessScore > 70) {
+        current++;
+        if (current > longest) longest = current;
+      } else {
+        current = 0;
+      }
+    }
+    return longest;
+  }
+
+  /// Total number of days the user has completed a check-in (mood logged).
+  int getTotalCheckins() {
+    final box = _box;
+    if (box == null) return 0;
+    int count = 0;
+    for (final key in box.keys) {
+      final stored = box.get(key);
+      if (stored is Map && stored['moodRating'] != null) count++;
+    }
+    return count;
+  }
+
+  /// Total number of days the user has saved a gratitude entry.
+  int getTotalGratitudeEntries() {
+    final box = _box;
+    if (box == null) return 0;
+    int count = 0;
+    for (final key in box.keys) {
+      final stored = box.get(key);
+      if (stored is Map) {
+        final entry = stored['gratitudeEntry'] as String?;
+        if (entry != null && entry.trim().isNotEmpty) count++;
+      }
+    }
+    return count;
+  }
+
+  /// Days tracked = distinct calendar days with stored data.
+  int getDaysTracked() => _box?.keys.length ?? 0;
+
   /// Notify listeners to trigger a UI refresh.
   void refresh() {
     notifyListeners();
