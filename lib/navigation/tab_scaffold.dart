@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/insights_screen.dart';
 import '../screens/toolkit_screen.dart';
@@ -31,6 +32,12 @@ class _TabScaffoldState extends State<TabScaffold> {
     ProfileScreen(),
   ];
 
+  void _onTabTapped(int i) {
+    if (i == _currentIndex) return;
+    HapticFeedback.selectionClick();
+    setState(() => _currentIndex = i);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -39,11 +46,12 @@ class _TabScaffoldState extends State<TabScaffold> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Screen content
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
+          // Screen content — all screens are kept alive; the active one fades in.
+          for (int i = 0; i < _screens.length; i++)
+            _AnimatedTabChild(
+              isActive: i == _currentIndex,
+              child: _screens[i],
+            ),
 
           // Floating glass tab bar
           Positioned(
@@ -84,7 +92,7 @@ class _TabScaffoldState extends State<TabScaffold> {
                         icon: _tabs[i].icon,
                         label: _tabs[i].label,
                         isSelected: isSelected,
-                        onTap: () => setState(() => _currentIndex = i),
+                        onTap: () => _onTabTapped(i),
                       );
                     }),
                   ),
@@ -98,13 +106,41 @@ class _TabScaffoldState extends State<TabScaffold> {
   }
 }
 
+/// Keeps every screen mounted (so scroll positions and state persist) while
+/// cross-fading between the active and inactive ones.
+class _AnimatedTabChild extends StatelessWidget {
+  final bool isActive;
+  final Widget child;
+
+  const _AnimatedTabChild({
+    required this.isActive,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: !isActive,
+      child: AnimatedOpacity(
+        opacity: isActive ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: TickerMode(
+          enabled: isActive,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class _TabItem {
   final IconData icon;
   final String label;
   const _TabItem({required this.icon, required this.label});
 }
 
-class _GlassTabButton extends StatelessWidget {
+class _GlassTabButton extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
@@ -118,49 +154,104 @@ class _GlassTabButton extends StatelessWidget {
   });
 
   @override
+  State<_GlassTabButton> createState() => _GlassTabButtonState();
+}
+
+class _GlassTabButtonState extends State<_GlassTabButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _bounce;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounce = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.18)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.18, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 60,
+      ),
+    ]).animate(_bounce);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GlassTabButton old) {
+    super.didUpdateWidget(old);
+    if (widget.isSelected && !old.isSelected) {
+      _bounce.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _bounce.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: label,
+      label: widget.label,
       button: true,
-      selected: isSelected,
+      selected: widget.isSelected,
       child: GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.accent.withValues(alpha: 0.14)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? AppColors.accent.withValues(alpha: 0.14)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: Icon(
+                    widget.icon,
+                    size: 22,
+                    color: widget.isSelected
+                        ? AppColors.accent
+                        : AppColors.textTertiary,
+                  ),
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 22,
-                color: isSelected ? AppColors.accent : AppColors.textTertiary,
+              const SizedBox(height: 2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight:
+                      widget.isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: widget.isSelected
+                      ? AppColors.accent
+                      : AppColors.textTertiary,
+                  letterSpacing: -0.1,
+                ),
+                child: Text(widget.label),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? AppColors.accent : AppColors.textTertiary,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

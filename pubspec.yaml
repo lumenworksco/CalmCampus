@@ -24,7 +24,6 @@ dependencies:
   app_usage: ^4.1.0
   health: ^13.3.1
   flutter_activity_recognition: ^4.0.0
-  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:

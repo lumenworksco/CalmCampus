@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _slides = [
     (
       '\u{1F9E0}',
-      'Welcome to\nCalmCampus',
+      'Welcome to\nCalm Campus',
       'Your privacy-first companion for student wellbeing. '
           'Detect early signs of stress before burnout strikes.'
     ),

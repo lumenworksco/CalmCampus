@@ -1,65 +1,196 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/data_engine.dart';
 import '../data/mood_data.dart';
 import '../models/daily_data.dart';
 
-/// Unified Gemini AI service for all AI-powered features.
+/// Unified local-AI service backed by Ollama (https://ollama.com).
 ///
-/// Pass the API key at build time:
-///   flutter run --dart-define=GEMINI_API_KEY=your_key
+/// Runs Ollama on a machine reachable from the phone (your laptop on the
+/// same Wi-Fi, or the emulator host). Default endpoint:
 ///
-/// Every method gracefully returns null / empty when no key is configured,
-/// so callers can fall back to static content.
-class GeminiService extends ChangeNotifier {
-  static const _apiKey = String.fromEnvironment('GEMINI_API_KEY');
-  GenerativeModel? _model;
+///   - Android emulator:  10.0.2.2:11434  (maps to host localhost)
+///   - iOS simulator / macOS: localhost:11434
+///   - Physical device: override via Settings → AI with the LAN IP
+///     of the computer running `ollama serve`.
+///
+/// Build-time overrides (optional):
+///   flutter run --dart-define=OLLAMA_HOST=192.168.1.42:11434 \
+///               --dart-define=OLLAMA_MODEL=llama3.2:3b
+///
+/// Every method returns null / empty when Ollama is unreachable, so callers
+/// transparently fall back to static content.
+class OllamaService extends ChangeNotifier {
+  static const _buildHost = String.fromEnvironment('OLLAMA_HOST');
+  static const _buildModel = String.fromEnvironment(
+    'OLLAMA_MODEL',
+    defaultValue: 'llama3.2:3b',
+  );
 
-  // ── Insight cache ──
+  static const _prefHost = 'ollama_host';
+  static const _prefModel = 'ollama_model';
+
+  String _host = '';
+  String _model = _buildModel;
+  bool _initialized = false;
+  bool _reachable = false;
+
+  // ── Caches (per-day, same shape the UI already uses) ──
   String? _insightCache;
   String? _insightCacheDate;
   bool _isGeneratingInsight = false;
 
-  // ── Tool-reason cache ──
   Map<String, String>? _toolReasons;
   String? _toolReasonsDate;
 
-  // ── Anomaly-rewrite cache ──
   Map<String, String>? _anomalyRewrites;
   String? _anomalyRewritesDate;
 
-  bool get isAvailable => _apiKey.isNotEmpty;
+  OllamaService() {
+    _loadSettings();
+  }
+
+  // ── Public getters ──
+  String get host => _host;
+  String get model => _model;
+  bool get isInitialized => _initialized;
+  bool get isAvailable => _initialized && _reachable;
   bool get isGeneratingInsight => _isGeneratingInsight;
   String? get cachedInsight => _insightCache;
   Map<String, String>? get toolReasons => _toolReasons;
   Map<String, String>? get anomalyRewrites => _anomalyRewrites;
 
-  GenerativeModel get _gemini {
-    _model ??= GenerativeModel(
-      model: 'gemini-2.0-flash',
-      apiKey: _apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.7,
-        maxOutputTokens: 200,
-      ),
-    );
-    return _model!;
+  String get defaultHost {
+    if (_buildHost.isNotEmpty) return _buildHost;
+    if (!kIsWeb && Platform.isAndroid) return '10.0.2.2:11434';
+    return 'localhost:11434';
   }
 
-  Future<String?> _call(String prompt) async {
-    if (!isAvailable) return null;
+  Future<void> _loadSettings() async {
     try {
-      final response = await _gemini.generateContent([Content.text(prompt)]);
-      return response.text?.trim();
+      final prefs = await SharedPreferences.getInstance();
+      _host = prefs.getString(_prefHost) ?? defaultHost;
+      _model = prefs.getString(_prefModel) ?? _buildModel;
+    } catch (_) {
+      _host = defaultHost;
+      _model = _buildModel;
+    }
+    _initialized = true;
+    notifyListeners();
+    unawaited(_checkHealth());
+  }
+
+  Future<void> setHost(String host) async {
+    _host = host.trim();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefHost, _host);
+    } catch (_) {}
+    _invalidateCaches();
+    _reachable = false;
+    notifyListeners();
+    unawaited(_checkHealth());
+  }
+
+  Future<void> setModel(String model) async {
+    _model = model.trim();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefModel, _model);
+    } catch (_) {}
+    _invalidateCaches();
+    notifyListeners();
+  }
+
+  void _invalidateCaches() {
+    _insightCache = null;
+    _insightCacheDate = null;
+    _toolReasons = null;
+    _toolReasonsDate = null;
+    _anomalyRewrites = null;
+    _anomalyRewritesDate = null;
+  }
+
+  /// Pings `/api/tags` to see if Ollama is reachable. Call from the settings
+  /// screen or before making a request. Updates [isAvailable].
+  Future<bool> ping() => _checkHealth();
+
+  Future<bool> _checkHealth() async {
+    if (_host.isEmpty) {
+      _reachable = false;
+      notifyListeners();
+      return false;
+    }
+    HttpClient? client;
+    try {
+      client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 2);
+      final req = await client.getUrl(Uri.parse('http://$_host/api/tags'));
+      final resp = await req.close().timeout(const Duration(seconds: 3));
+      _reachable = resp.statusCode == 200;
+      // Drain to free the socket.
+      await resp.drain<void>();
     } catch (e) {
-      debugPrint('GeminiService: $e');
+      _reachable = false;
+      debugPrint('Ollama health check failed: $e');
+    } finally {
+      client?.close(force: true);
+    }
+    notifyListeners();
+    return _reachable;
+  }
+
+  /// Core HTTP call — POSTs to `/api/generate` and returns the trimmed
+  /// `response` field, or null on any failure.
+  Future<String?> _call(String prompt) async {
+    if (!_initialized) return null;
+    if (!_reachable) {
+      final ok = await _checkHealth();
+      if (!ok) return null;
+    }
+
+    HttpClient? client;
+    try {
+      client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 5);
+      final req =
+          await client.postUrl(Uri.parse('http://$_host/api/generate'));
+      req.headers.contentType = ContentType.json;
+      req.add(utf8.encode(jsonEncode({
+        'model': _model,
+        'prompt': prompt,
+        'stream': false,
+        'options': {
+          'temperature': 0.7,
+          'num_predict': 250,
+        },
+      })));
+      final resp = await req.close().timeout(const Duration(seconds: 60));
+      if (resp.statusCode != 200) {
+        debugPrint('Ollama error ${resp.statusCode}');
+        await resp.drain<void>();
+        return null;
+      }
+      final body = await resp.transform(utf8.decoder).join();
+      final obj = jsonDecode(body) as Map<String, dynamic>;
+      return (obj['response'] as String?)?.trim();
+    } catch (e) {
+      debugPrint('OllamaService: $e');
+      _reachable = false;
+      notifyListeners();
       return null;
+    } finally {
+      client?.close(force: true);
     }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. Weekly Insight  (Insights tab + Dashboard summary)
+  // 1. Weekly Insight
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<String?> generateInsight(
@@ -113,7 +244,7 @@ class GeminiService extends ChangeNotifier {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. Thought Reframes  (CBT Thought Reframer tool)
+  // 2. Thought Reframes
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<List<String>> suggestReframes(
@@ -166,7 +297,7 @@ class GeminiService extends ChangeNotifier {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5a. Toolkit recommendation reasons  (cached per day)
+  // 5a. Toolkit recommendation reasons
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> generateToolReasons(DailyData data, List<String> toolIds) async {
@@ -199,10 +330,11 @@ class GeminiService extends ChangeNotifier {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5b. Anomaly message rewrites  (cached per day)
+  // 5b. Anomaly message rewrites
   // ─────────────────────────────────────────────────────────────────────────
 
-  Future<void> rewriteAnomalies(List<(String id, String title, String msg)> anomalies) async {
+  Future<void> rewriteAnomalies(
+      List<(String id, String title, String msg)> anomalies) async {
     final today = _todayStr();
     if (_anomalyRewritesDate == today && _anomalyRewrites != null) return;
     if (anomalies.isEmpty) return;

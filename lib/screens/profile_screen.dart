@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/ollama_service.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
 
@@ -33,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final repo = context.watch<WellnessRepository>();
+    final ollama = context.watch<OllamaService>();
     final topPadding = MediaQuery.of(context).padding.top;
 
     return CupertinoScrollbar(
@@ -113,6 +115,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ]),
 
+            // -- Local AI section --
+            _sectionLabel('LOCAL AI'),
+            _groupedCard([
+              _infoRow(
+                'Status',
+                ollama.isAvailable
+                    ? 'Connected'
+                    : (ollama.isInitialized ? 'Not reachable' : 'Checking...'),
+              ),
+              _separator(),
+              _tappableRow(
+                label: 'Host',
+                trailing: ollama.host,
+                onTap: () => _editOllamaHost(context, ollama),
+              ),
+              _separator(),
+              _tappableRow(
+                label: 'Model',
+                trailing: ollama.model,
+                onTap: () => _editOllamaModel(context, ollama),
+              ),
+              _separator(),
+              _tappableRow(
+                label: 'Test connection',
+                onTap: () => _testOllama(context, ollama),
+                isLast: true,
+              ),
+            ]),
+            _footer(
+              'AI features run on a local Ollama server. Install Ollama on '
+              'your computer (ollama.com), run "ollama pull ${ollama.model}", '
+              'then enter your computer\'s LAN IP above (e.g. 192.168.1.42:11434). '
+              'Nothing is sent to the cloud.',
+            ),
+
             // -- Data Management section --
             _sectionLabel('DATA MANAGEMENT'),
             _groupedCard([
@@ -144,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _infoRow('KICK Challenge 2026', ''),
             ]),
             _footer(
-              'CalmCampus detects early signs of student burnout via '
+              'Calm Campus detects early signs of student burnout via '
               'behavioral signals and delivers personalized '
               'micro-interventions. Built for the KU Leuven KICK Challenge.',
             ),
@@ -180,6 +217,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(ctx);
             },
             child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editOllamaHost(
+      BuildContext context, OllamaService ollama) async {
+    final controller = TextEditingController(text: ollama.host);
+    final newHost = await showCupertinoDialog<String>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ollama Host'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: controller,
+            autofocus: true,
+            placeholder: 'e.g. 192.168.1.42:11434',
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (newHost != null && newHost.trim().isNotEmpty) {
+      await ollama.setHost(newHost);
+    }
+  }
+
+  Future<void> _editOllamaModel(
+      BuildContext context, OllamaService ollama) async {
+    final controller = TextEditingController(text: ollama.model);
+    final newModel = await showCupertinoDialog<String>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Ollama Model'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: CupertinoTextField(
+            controller: controller,
+            autofocus: true,
+            placeholder: 'e.g. llama3.2:3b',
+            autocorrect: false,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (newModel != null && newModel.trim().isNotEmpty) {
+      await ollama.setModel(newModel);
+    }
+  }
+
+  Future<void> _testOllama(BuildContext context, OllamaService ollama) async {
+    final reachable = await ollama.ping();
+    if (!context.mounted) return;
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(reachable ? 'Connected' : 'Not reachable'),
+        content: Text(
+          reachable
+              ? 'Ollama is running at ${ollama.host} and ready to use.'
+              : 'Could not reach Ollama at ${ollama.host}. Make sure '
+                  '"ollama serve" is running and your phone can reach '
+                  'that address.',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -278,6 +406,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _tappableRow({
     required String label,
     required VoidCallback onTap,
+    String? trailing,
     bool isFirst = false,
     bool isLast = false,
     bool isDestructive = false,
@@ -307,6 +436,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            if (trailing != null) ...[
+              Flexible(
+                child: Text(
+                  trailing,
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
             const Icon(
               CupertinoIcons.chevron_right,
               size: 14,
