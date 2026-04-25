@@ -25,23 +25,23 @@ body {
   border-radius: 20px;
   overflow: hidden;
   position: relative;
-  display: flex;
-  flex-direction: column;
 }
-/* Fake status bar area */
-.screen::before {
-  content: '';
-  display: block;
-  height: 52px;
-  flex-shrink: 0;
-}
-/* Scrollable content region — fills space above the tab bar */
+
+/*
+ * Content scrolls the FULL height of the screen.
+ * The tab bar floats over it (position:absolute), so content visibly
+ * continues behind the frosted glass — exactly like iOS liquid glass.
+ * Bottom padding keeps the last card reachable above the bar.
+ */
 .screen-scroll {
-  flex: 1;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  padding-top: 52px;   /* status bar clearance */
+  padding-bottom: 88px; /* enough to scroll last card above the tab bar */
+  box-sizing: border-box;
 }
 .screen-scroll::-webkit-scrollbar { display: none; }
 .card { background: var(--surface); border-radius: 12px; margin: 0 14px; }
@@ -106,12 +106,14 @@ body {
 .ach-tile.locked .ach-icon-wrap { background: var(--bg); opacity: 0.4; }
 .ach-tile.locked .ach-label { color: var(--text3); }
 .section-label { padding: 20px 26px 6px; font-size: 11px; font-weight: 500; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
-/* ── iOS 26-style liquid glass tab bar ──────────────────────────────────── */
+/* ── iOS 26-style liquid glass tab bar — floats over content ────────────── */
 .tab-bar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 262px;
   height: 62px;
-  margin: 6px auto 12px;
-  flex-shrink: 0;
   /* Frosted glass pill */
   background: linear-gradient(175deg,
     rgba(255,255,255,0.78) 0%,
