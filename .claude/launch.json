@@ -4,8 +4,14 @@
     {
       "name": "mockups",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "3399", "--directory", "mockups/export"],
+      "runtimeArgs": ["-m", "http.server", "3399", "--directory", "mockups"],
       "port": 3399
+    },
+    {
+      "name": "website",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3400", "--directory", "website"],
+      "port": 3400
     }
   ]
 }
