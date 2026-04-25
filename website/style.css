@@ -67,8 +67,23 @@ body {
   margin-right: auto;
 }
 
-.logo-mark { font-size: 20px; line-height: 1; }
-.logo-text  { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+/* Logo images */
+.nav-logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+  border-radius: 8px;
+  background: #fff;
+  padding: 3px 6px;
+}
+.footer-logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  padding: 3px 6px;
+}
 
 .nav-links {
   display: flex;
