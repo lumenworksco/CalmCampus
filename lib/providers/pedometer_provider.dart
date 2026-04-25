@@ -21,15 +21,6 @@ class PedometerProvider extends ChangeNotifier {
 
   void init() {
     _loadAndStart();
-
-    // If no event received within 3 seconds, mark as unavailable
-    _timeoutTimer = Timer(const Duration(seconds: 3), () {
-      if (_isLoading) {
-        _isLoading = false;
-        _isAvailable = false;
-        notifyListeners();
-      }
-    });
   }
 
   Future<void> _loadAndStart() async {
@@ -43,6 +34,16 @@ class PedometerProvider extends ChangeNotifier {
       _initialSteps = storedInitial;
     }
     // Otherwise, _initialSteps remains null and will be set from the first event
+
+    // Start the timeout AFTER prefs load so the 3 s is measured from
+    // when the subscription is actually live — not from cold app start.
+    _timeoutTimer = Timer(const Duration(seconds: 3), () {
+      if (_isLoading) {
+        _isLoading = false;
+        _isAvailable = false;
+        notifyListeners();
+      }
+    });
 
     try {
       _subscription = Pedometer.stepCountStream.listen(

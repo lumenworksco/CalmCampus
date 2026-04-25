@@ -138,8 +138,8 @@ class ProfileScreen extends StatelessWidget {
               'and a healthy wellness score above 70.',
             ),
 
-            // Bottom padding for tab bar
-            const SizedBox(height: 120),
+            // Bottom padding for floating tab bar (bar height 64 + offset 8 + safe area + breathing room)
+            SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
           ],
         ),
       ),

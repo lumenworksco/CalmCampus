@@ -367,7 +367,6 @@ List<WellnessAnomaly> detectAnomalies({List<DailyData>? history}) {
 }
 
 /// Generate a smart insight that references step data, anomalies, and weekly trends.
-/// Replaces [getWeeklyInsight] with richer, more contextual output.
 ///
 /// If [history] is provided, it will be used instead of regenerating synthetic data.
 /// The last entry in [history] is treated as today.

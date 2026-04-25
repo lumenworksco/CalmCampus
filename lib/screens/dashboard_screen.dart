@@ -415,8 +415,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // Bottom padding for tab bar
-                const SizedBox(height: 100),
+                // Bottom padding for floating tab bar (bar height 64 + offset 8 + safe area + breathing room)
+                SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
               ],
             ),
           ),

@@ -1,3 +1,4 @@
+import '../data/data_engine.dart';
 import 'wellness_repository.dart';
 
 class BaselineMetrics {
@@ -48,10 +49,9 @@ class BaselineService {
         data.map((d) => d.screenTimeHours).reduce((a, b) => a + b) / data.length;
     final avgWellness =
         data.map((d) => d.wellnessScore).reduce((a, b) => a + b) / data.length;
-    final avgFocus = data
-            .map((d) => 100.0 - (d.appSwitches / 40.0) * 100.0)
-            .reduce((a, b) => a + b) /
-        data.length;
+    final avgFocus =
+        data.map((d) => computeFocusScore(d.appSwitches).toDouble()).reduce((a, b) => a + b) /
+            data.length;
 
     // For mood, only average non-null values
     final moodValues =

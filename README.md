@@ -23,7 +23,7 @@ CalmCampus is a mobile wellness companion designed for university students. It p
 - **Privacy-first architecture** -- all data stays on-device, no cloud sync, no tracking, GDPR-native by design
 - **Campus resources integration** -- direct links to KU Leuven student support services and emergency contacts
 - **CBT & ACT therapeutic framework** -- interventions rooted in Cognitive Behavioral Therapy and Acceptance & Commitment Therapy
-- **Dark mode support** -- automatic system theme detection
+- **Clean iOS-native light UI** -- polished Apple-style design language throughout
 
 ---
 
