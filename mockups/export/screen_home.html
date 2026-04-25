@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><link rel="stylesheet" href="shared.css"></head>
+<body>
+<div class="screen">
+  <div class="screen-scroll">
+    <div class="dash-header">
+      <div class="dash-greeting">Good morning</div>
+      <div class="dash-date">
+        Friday, April 25
+        <span class="streak-pill">🔥 4 days</span>
+      </div>
+    </div>
+
+    <div class="checkin-card">
+      <div class="checkin-emoji">😊</div>
+      <div class="checkin-text">
+        <div class="title">Feeling Good</div>
+        <div class="sub">High energy</div>
+      </div>
+      <div class="checkin-check">✓</div>
+    </div>
+
+    <div class="gauge-card">
+      <svg class="gauge-svg" viewBox="0 0 130 100">
+        <path d="M 15 70 A 50 50 0 0 1 115 70" fill="none" stroke="#E5E5EA" stroke-width="10" stroke-linecap="round"/>
+        <path d="M 15 70 A 50 50 0 0 1 115 70" fill="none" stroke="#34C759" stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="157" stroke-dashoffset="47"/>
+        <text x="65" y="64" text-anchor="middle" font-size="26" font-weight="700" fill="rgba(0,0,0,0.85)">76</text>
+        <text x="65" y="92" text-anchor="middle" font-size="9" fill="rgba(0,0,0,0.5)">Mostly good, stay mindful</text>
+      </svg>
+      <div class="gauge-caption">Your 4-day streak is paying off. Sleep consistency is driving today's score.</div>
+    </div>
+
+    <div class="anomaly-card">
+      <div class="anomaly-dot" style="background:#FF9F0A"></div>
+      <div>
+        <div class="anomaly-title">Screen time spike</div>
+        <div class="anomaly-msg">2.3h above your weekly average of 4.1h. Consider a short break.</div>
+      </div>
+    </div>
+
+    <div class="signals-card">
+      <div class="signal-row">
+        <div class="signal-icon" style="background:rgba(52,199,89,0.12)">🦶</div>
+        <div>
+          <div class="signal-label">Steps</div>
+          <div class="signal-sub">Live <span style="color:#34C759">●</span></div>
+        </div>
+        <div class="signal-value">
+          <div class="val">6,240</div>
+          <div class="unit">steps <span class="trend-up">↑</span></div>
+        </div>
+      </div>
+      <div class="signal-row">
+        <div class="signal-icon" style="background:rgba(88,86,214,0.12)">🌙</div>
+        <div>
+          <div class="signal-label">Sleep</div>
+          <div class="signal-sub">Last night</div>
+        </div>
+        <div class="signal-value">
+          <div class="val">7.2</div>
+          <div class="unit">hours <span class="trend-up">↑</span></div>
+        </div>
+      </div>
+      <div class="signal-row">
+        <div class="signal-icon" style="background:rgba(255,159,10,0.12)">📱</div>
+        <div>
+          <div class="signal-label">Screen Time</div>
+          <div class="signal-sub">Today</div>
+        </div>
+        <div class="signal-value">
+          <div class="val">6.4</div>
+          <div class="unit">hours <span class="trend-down">↑</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 12px;"></div>
+  </div><!-- end .screen-scroll -->
+
+  <div class="tab-bar">
+    <div class="tab-item active"><span class="tab-icon">🏠</span></div>
+    <div class="tab-item"><span class="tab-icon">📊</span></div>
+    <div class="tab-item"><span class="tab-icon">⚙️</span></div>
+    <div class="tab-item"><span class="tab-icon">👤</span></div>
+  </div>
+</div>
+</body></html>
