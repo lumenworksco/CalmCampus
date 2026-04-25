@@ -106,43 +106,73 @@ body {
 .ach-tile.locked .ach-icon-wrap { background: var(--bg); opacity: 0.4; }
 .ach-tile.locked .ach-label { color: var(--text3); }
 .section-label { padding: 20px 26px 6px; font-size: 11px; font-weight: 500; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
-/* Liquid glass floating tab bar — pinned at bottom of the fixed-height screen */
+/* ── iOS 26-style liquid glass tab bar ──────────────────────────────────── */
 .tab-bar {
-  width: 216px;
-  height: 54px;
-  margin: 8px auto 14px;
+  width: 262px;
+  height: 62px;
+  margin: 6px auto 12px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(232,232,242,0.88) 100%);
-  border-radius: 27px;
-  border: 0.5px solid rgba(255,255,255,1);
+  /* Frosted glass pill */
+  background: linear-gradient(175deg,
+    rgba(255,255,255,0.78) 0%,
+    rgba(236,236,248,0.72) 100%);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border-radius: 31px;
+  border: 0.5px solid rgba(255,255,255,0.9);
   box-shadow:
-    0 0 0 0.5px rgba(0,0,0,0.10),
-    0 20px 56px rgba(0,0,0,0.22),
-    0 6px 18px rgba(0,0,0,0.12),
-    inset 0 1.5px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(0,0,0,0.03);
+    0 0 0 0.5px rgba(0,0,0,0.08),
+    0 18px 48px rgba(0,0,0,0.18),
+    0 4px 14px rgba(0,0,0,0.10),
+    inset 0 1.5px 0 rgba(255,255,255,0.95),
+    inset 0 -1px 0 rgba(0,0,0,0.04);
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 6px;
+  padding: 0 8px;
+  gap: 2px;
 }
+
+/* Each tab button: icon stacked above label */
 .tab-item {
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
+  flex: 1;
+  height: 50px;
+  border-radius: 25px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  opacity: 0.32;
+  gap: 2px;
+  opacity: 0.38;
+  transition: opacity 0.2s;
 }
+
+/* Active tab — inner glass pill that lifts off the bar */
 .tab-item.active {
   opacity: 1;
-  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(240,240,250,0.75) 100%);
+  background: linear-gradient(175deg,
+    rgba(255,255,255,0.90) 0%,
+    rgba(245,245,255,0.80) 100%);
   box-shadow:
-    0 2px 12px rgba(0,0,0,0.13),
-    0 1px 4px rgba(0,0,0,0.06),
+    0 3px 14px rgba(0,0,0,0.14),
+    0 1px 4px rgba(0,0,0,0.07),
     inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -0.5px 0 rgba(0,0,0,0.05);
-  border: 0.5px solid rgba(255,255,255,0.8);
+    inset 0 -0.5px 0 rgba(0,0,0,0.06);
+  border: 0.5px solid rgba(255,255,255,0.85);
 }
-.tab-icon { font-size: 21px; }
+
+.tab-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+.tab-label {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(0,0,0,0.55);
+  letter-spacing: 0.1px;
+  line-height: 1;
+}
+.tab-item.active .tab-label {
+  color: var(--accent);
+  font-weight: 600;
+}
