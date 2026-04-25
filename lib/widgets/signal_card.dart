@@ -12,7 +12,7 @@ class SignalCard extends StatelessWidget {
     'steps': (CupertinoIcons.flame_fill, Color(0xFFFF9F0A)),
     'moon': (CupertinoIcons.moon_fill, Color(0xFF5856D6)),
     'phone': (CupertinoIcons.device_phone_portrait, Color(0xFF8E8E93)),
-    'walk': (CupertinoIcons.bolt_fill, Color(0xFF34C759)),
+    'walk': (CupertinoIcons.bolt_fill, AppColors.primary),
     'target': (CupertinoIcons.scope, Color(0xFF007AFF)),
   };
 

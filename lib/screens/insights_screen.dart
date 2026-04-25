@@ -230,7 +230,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               title: 'Active Minutes',
               data: weeklyData.map((d) => d.activeMinutes.toDouble()).toList(),
               labels: labels,
-              color: const Color(0xFF34C759),
+              color: AppColors.primary,
               suffix: ' min',
             ),
             const SizedBox(height: 4),

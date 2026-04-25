@@ -1,8 +1,13 @@
 import 'dart:ui';
 
 class AppColors {
-  // -- Primary wellness accent (green) --
-  static const primary = Color(0xFF34C759);
+  // -- Primary wellness accent (dark sage) --
+  static const primary = Color(0xFF7B9460);
+
+  // -- Palette secondaries --
+  static const sageMid   = Color(0xFF8DAA72); // mid sage
+  static const sageLight = Color(0xFFC2D19E); // light sage
+  static const cream     = Color(0xFFF0F4E2); // cream background
 
   // -- Interactive accent (iOS blue) --
   static const accent = Color(0xFF007AFF);
@@ -12,7 +17,7 @@ class AppColors {
   static const warning = Color(0xFFFF9F0A);
 
   // -- Light surfaces --
-  static const background = Color(0xFFF2F2F7);
+  static const background = Color(0xFFF0F4E2); // cream
   static const surface = Color(0xFFFFFFFF);
 
   // -- Dark surfaces --
