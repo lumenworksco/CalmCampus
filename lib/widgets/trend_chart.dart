@@ -1,14 +1,15 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
+/// 7-day bar chart matching the mockup: lighter bars for past days,
+/// fully-saturated bar for the most recent (today/Sunday in mockup).
 class TrendChart extends StatelessWidget {
   final String title;
   final List<double> data;
   final List<String> labels;
   final Color color;
   final String suffix;
-  final double? baselineValue;
+  final double? baselineValue; // unused in bar style — kept for API compat
 
   const TrendChart({
     super.key,
@@ -23,13 +24,14 @@ class TrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) return const SizedBox.shrink();
-    final currentValue = data.last;
-    final minY = data.reduce((a, b) => a < b ? a : b) * 0.85;
-    final maxY = data.reduce((a, b) => a > b ? a : b) * 1.1;
+    final maxV = data.reduce((a, b) => a > b ? a : b);
+    final minV = data.reduce((a, b) => a < b ? a : b);
+    // Baseline reference for bar opacity — span from 25% to 100%.
+    // The most recent bar (last index) is always full opacity.
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -37,121 +39,71 @@ class TrendChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
-                ),
-              ),
-              Text(
-                '${currentValue.toStringAsFixed(currentValue == currentValue.roundToDouble() ? 0 : 1)}$suffix',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                  letterSpacing: -0.4,
-                ),
-              ),
-            ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.text,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SizedBox(
-            height: 140,
-            child: LineChart(
-              LineChartData(
-                minY: minY,
-                maxY: maxY,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: (maxY - minY) / 4,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.border.withValues(alpha: 0.5),
-                    strokeWidth: 0.33,
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (value != idx.toDouble() ||
-                            idx < 0 ||
-                            idx >= labels.length) {
-                          return const SizedBox();
-                        }
-                        return Text(
-                          labels[idx],
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textTertiary,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: data
-                        .asMap()
-                        .entries
-                        .map((e) => FlSpot(e.key.toDouble(), e.value))
-                        .toList(),
-                    isCurved: true,
-                    color: color,
-                    barWidth: 1.5,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, bar, index) =>
-                          FlDotCirclePainter(
-                        radius: 2,
-                        color: Colors.white,
-                        strokeWidth: 1.5,
-                        strokeColor: color,
-                      ),
-                    ),
-                    belowBarData: BarAreaData(show: false),
-                  ),
+            height: 60,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (int i = 0; i < data.length; i++) ...[
+                  Expanded(child: _bar(i, maxV, minV)),
+                  if (i < data.length - 1) const SizedBox(width: 6),
                 ],
-                extraLinesData: baselineValue != null
-                    ? ExtraLinesData(horizontalLines: [
-                        HorizontalLine(
-                          y: baselineValue!,
-                          color: AppColors.textTertiary.withValues(alpha: 0.4),
-                          strokeWidth: 0.5,
-                          dashArray: [4, 4],
-                          label: HorizontalLineLabel(
-                            show: true,
-                            alignment: Alignment.topRight,
-                            style: const TextStyle(
-                                fontSize: 10, color: AppColors.textTertiary),
-                            labelResolver: (_) => 'avg',
-                          ),
-                        ),
-                      ])
-                    : null,
-                lineTouchData: const LineTouchData(enabled: false),
-              ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _bar(int index, double maxV, double minV) {
+    final value = data[index];
+    final isLast = index == data.length - 1;
+    // Height fraction: 0 → 0.18, max → 1.0
+    final span = (maxV - minV) <= 0 ? 1 : (maxV - minV);
+    final norm = span == 0 ? 0.5 : (value - minV) / span;
+    final heightFrac = 0.25 + norm * 0.75; // keeps min bar visible
+    // Opacity: lighter for past days, full for the latest bar
+    final alpha = isLast ? 1.0 : 0.20 + norm * 0.40;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (_, c) => Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.infinity,
+                height: c.maxHeight * heightFrac,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: alpha),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          labels.length > index ? labels[index] : '',
+          style: const TextStyle(
+            fontSize: 9,
+            color: AppColors.textTertiary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

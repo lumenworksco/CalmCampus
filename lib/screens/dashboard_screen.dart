@@ -250,25 +250,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         _greeting(),
                         style: const TextStyle(
-                          fontSize: 34,
+                          fontSize: 30,
                           fontWeight: FontWeight.w700,
                           color: AppColors.text,
-                          letterSpacing: 0.4,
+                          letterSpacing: 0.3,
+                          height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Row(
                         children: [
                           Text(
                             DateFormat('EEEE, MMMM d').format(DateTime.now()),
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: AppColors.textSecondary,
                             ),
                           ),
                           if (streak > 0) ...[
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             StreakCard(streakDays: streak),
                           ],
                         ],
@@ -289,9 +290,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // -- Wellness gauge --
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 32, horizontal: 16),
+                  margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                  padding: const EdgeInsets.fromLTRB(14, 20, 14, 16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -301,14 +301,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Center(
                           child: WellnessGauge(
                               score: todayData.wellnessScore)),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
                           insight,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
                             height: 1.4,
@@ -330,13 +330,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 // -- Anomaly banners --
                 if (displayAnomalies.isNotEmpty) ...[
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   for (final anomaly in displayAnomalies)
                     Container(
                       key: ValueKey(anomaly.id),
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      margin: const EdgeInsets.fromLTRB(14, 0, 14, 0),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                          horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
@@ -356,7 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Text(
                                   anomaly.title,
                                   style: const TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.text,
                                   ),
@@ -374,10 +374,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   gemini.anomalyRewrites?[anomaly.id] ??
                                       anomaly.message,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w400,
                                     color: AppColors.textSecondary,
-                                    height: 1.3,
+                                    height: 1.4,
                                   ),
                                 ),
                               ],
@@ -388,11 +388,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                 ],
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
-                // -- Signals grouped card (no header text) --
+                // -- Signals grouped card --
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -402,13 +402,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       for (int i = 0; i < allSignals.length; i++) ...[
                         SignalCard(key: ValueKey(allSignals[i].id), signal: allSignals[i]),
                         if (i < allSignals.length - 1)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 64),
-                            child: Divider(
-                              height: 0.33,
-                              thickness: 0.33,
-                              color: AppColors.separator,
-                            ),
+                          const Divider(
+                            height: 0.5,
+                            thickness: 0.5,
+                            color: AppColors.separator,
+                            indent: 14,
+                            endIndent: 14,
                           ),
                       ],
                     ],
@@ -470,16 +469,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(width: 12),
+            Text(emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,17 +486,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     'Feeling $label',
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.text,
                     ),
                   ),
                   if (energyLabel.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       energyLabel,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary,
                       ),
@@ -507,9 +506,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const Icon(
-              CupertinoIcons.checkmark_circle_fill,
+              CupertinoIcons.checkmark,
               color: AppColors.primary,
-              size: 20,
+              size: 18,
             ),
           ],
         ),
@@ -518,13 +517,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Not yet checked in -- row of emoji faces, subtle tap hint
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
       child: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () => _showCheckinSheet(context, repo),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),

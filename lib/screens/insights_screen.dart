@@ -80,34 +80,34 @@ class _InsightsScreenState extends State<InsightsScreen> {
           children: [
             // -- Large title header --
             Padding(
-              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 2),
               child: const Text(
                 'Insights',
                 style: TextStyle(
-                  fontSize: 34,
+                  fontSize: 30,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text,
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
 
             const Padding(
-              padding: EdgeInsets.fromLTRB(16, 2, 16, 16),
+              padding: EdgeInsets.fromLTRB(16, 2, 16, 12),
               child: Text(
                 '7-day behavioral trends',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textSecondary,
                 ),
               ),
             ),
 
-            // -- AI Insight card -- clean white, no gradient --
+            // -- AI Insight card with sparkles icon --
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -116,20 +116,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.1),
+                      color: AppColors.accent.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
-                      CupertinoIcons.lightbulb,
-                      size: 16,
-                      color: AppColors.accent,
+                    child: const Text(
+                      '✨',
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,38 +138,36 @@ class _InsightsScreenState extends State<InsightsScreen> {
                             const Text(
                               'Summary',
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.text,
                               ),
                             ),
-                            if (aiService.isAvailable) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'AI',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.accent,
-                                  ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'AI',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.accent,
                                 ),
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         if (aiService.isGeneratingInsight && aiService.cachedInsight == null)
                           const Text(
                             'Analyzing your week...',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 12,
                               fontStyle: FontStyle.italic,
                               color: AppColors.textTertiary,
                               height: 1.5,
@@ -180,7 +177,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           Text(
                             insight,
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 12,
                               color: AppColors.textSecondary,
                               height: 1.5,
                             ),

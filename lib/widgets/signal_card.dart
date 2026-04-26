@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import '../models/behavioral_signal.dart';
 import '../theme/app_colors.dart';
 
+/// Compact signal row matching the mockup:
+///  [tinted icon square] [label / sub] [value / unit + trend arrow]
 class SignalCard extends StatelessWidget {
   final BehavioralSignal signal;
   final String? baselineComparison;
@@ -11,7 +13,7 @@ class SignalCard extends StatelessWidget {
   static const _iconConfig = <String, (IconData, Color)>{
     'steps': (CupertinoIcons.flame_fill, Color(0xFFFF9F0A)),
     'moon': (CupertinoIcons.moon_fill, Color(0xFF5856D6)),
-    'phone': (CupertinoIcons.device_phone_portrait, Color(0xFF8E8E93)),
+    'phone': (CupertinoIcons.device_phone_portrait, Color(0xFFFF9F0A)),
     'walk': (CupertinoIcons.bolt_fill, AppColors.primary),
     'target': (CupertinoIcons.scope, Color(0xFF007AFF)),
   };
@@ -20,143 +22,118 @@ class SignalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final config =
         _iconConfig[signal.icon] ?? (CupertinoIcons.chart_bar, const Color(0xFF8E8E93));
-    final trendColor = signal.trendIsGood ? AppColors.primary : AppColors.danger;
-    final trendLabel = signal.trendIsGood
-        ? (signal.trend == SignalTrend.stable ? 'Stable' : 'Good')
-        : (signal.trend == SignalTrend.stable ? 'Stable' : 'Attention');
+
+    // Sub-label: "Live" with green dot if live, else "Today" / "Last night" derived
+    final subLabel = signal.isLive
+        ? 'Live'
+        : (signal.id == 'sleep'
+            ? 'Last night'
+            : 'Today');
+
+    final trendIcon = signal.trend == SignalTrend.up
+        ? '↑'
+        : (signal.trend == SignalTrend.down ? '↓' : '→');
+    final trendColor = signal.trendIsGood
+        ? AppColors.primary
+        : (signal.trend == SignalTrend.stable
+            ? AppColors.textTertiary
+            : AppColors.danger);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          // Icon in subtle tinted circle
+          // Tinted square icon
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: config.$2.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(config.$1, size: 18, color: config.$2),
-                // Tiny pulsing green dot for live signals
-                if (signal.isLive)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.surface,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            child: Icon(config.$1, size: 16, color: config.$2),
           ),
-          const SizedBox(width: 12),
-          // Info
+          const SizedBox(width: 10),
+          // Label + sub
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   signal.label,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 1),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      signal.value,
+                      subLabel,
                       style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    Text(
-                      ' ${signal.unit}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
+                        fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    if (signal.isLive) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
             ),
           ),
-          // Trend or "Estimated" label
-          if (signal.isLive)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: trendColor,
-                    shape: BoxShape.circle,
-                  ),
+          // Value + unit + trend
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                signal.value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                  letterSpacing: -0.2,
                 ),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
+              ),
+              const SizedBox(height: 1),
+              Row(
+                children: [
+                  Text(
+                    signal.unit,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (signal.value != '—') ...[
+                    const SizedBox(width: 4),
                     Text(
-                      trendLabel,
+                      trendIcon,
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         color: trendColor,
                       ),
                     ),
-                    if (baselineComparison != null)
-                      Text(
-                        baselineComparison!,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textTertiary,
-                        ),
-                      ),
                   ],
-                ),
-              ],
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(6),
+                ],
               ),
-              child: Text(
-                signal.value == '—' ? 'Unavailable' : 'Estimated',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
-                ),
-              ),
-            ),
+            ],
+          ),
         ],
       ),
     );
