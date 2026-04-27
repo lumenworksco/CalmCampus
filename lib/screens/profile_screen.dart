@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../navigation/tab_padding.dart';
 import '../providers/app_state.dart';
 import '../services/wellness_repository.dart';
 import '../theme/app_colors.dart';
@@ -138,8 +139,9 @@ class ProfileScreen extends StatelessWidget {
               'and a healthy wellness score above 70.',
             ),
 
-            // Bottom padding for floating tab bar (bar height 64 + offset 8 + safe area + breathing room)
-            SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
+            // Bottom padding — native iOS tab bar height comes via
+            // safe-area; Android adds the floating Flutter tab bar.
+            SizedBox(height: tabBarBottomPadding(context)),
           ],
         ),
       ),

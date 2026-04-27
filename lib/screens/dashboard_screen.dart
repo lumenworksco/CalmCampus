@@ -8,6 +8,7 @@ import '../data/interventions_data.dart';
 import '../data/mood_data.dart';
 import '../models/behavioral_signal.dart';
 import '../models/wellness_anomaly.dart';
+import '../navigation/tab_padding.dart';
 import '../providers/activity_provider.dart';
 import '../providers/app_state.dart';
 import '../providers/health_provider.dart';
@@ -414,8 +415,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // Bottom padding for floating tab bar (bar height 64 + offset 8 + safe area + breathing room)
-                SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
+                // Bottom padding — native iOS tab bar height comes via
+                // safe-area; Android adds the floating Flutter tab bar.
+                SizedBox(height: tabBarBottomPadding(context)),
               ],
             ),
           ),

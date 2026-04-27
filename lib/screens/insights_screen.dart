@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../data/data_engine.dart';
 import '../data/mood_data.dart';
+import '../navigation/tab_padding.dart';
 import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
@@ -242,8 +243,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
               baselineValue: baselineMetrics.avgFocus,
             ),
 
-            // Bottom padding for floating tab bar (bar height 64 + offset 8 + safe area + breathing room)
-            SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
+            // Bottom padding — native iOS tab bar height comes via
+            // safe-area; Android adds the floating Flutter tab bar.
+            SizedBox(height: tabBarBottomPadding(context)),
           ],
         ),
       ),

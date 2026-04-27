@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/interventions_data.dart';
 import '../models/breathing_pattern.dart';
 import '../models/daily_data.dart';
+import '../navigation/tab_padding.dart';
 import '../providers/activity_provider.dart';
 import '../providers/health_provider.dart';
 import '../providers/pedometer_provider.dart';
@@ -105,8 +106,7 @@ class ToolkitScreen extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-          top: topPad + 16,
-          bottom: 80 + MediaQuery.of(context).padding.bottom),
+          top: topPad + 16, bottom: tabBarBottomPadding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
