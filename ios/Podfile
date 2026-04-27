@@ -1,5 +1,5 @@
-# health plugin requires iOS 14.0+
-platform :ios, '14.0'
+# iOS 17.0+ required for device_info_plus (visionOS detection API)
+platform :ios, '17.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
