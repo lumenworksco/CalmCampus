@@ -69,7 +69,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
     final daysWithMood = weeklyData.where((d) => d.moodRating != null).toList();
 
-    final topPadding = MediaQuery.of(context).padding.top;
+    final topPadding = MediaQuery.of(context).viewPadding.top;
 
     return CupertinoScrollbar(
       child: SingleChildScrollView(

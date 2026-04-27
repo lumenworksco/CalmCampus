@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final repo = context.watch<WellnessRepository>();
-    final topPadding = MediaQuery.of(context).padding.top;
+    final topPadding = MediaQuery.of(context).viewPadding.top;
 
     final streak = repo.getStreak();
     final longestStreak = repo.getLongestStreak();

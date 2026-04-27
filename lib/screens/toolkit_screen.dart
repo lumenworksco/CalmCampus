@@ -72,7 +72,7 @@ class ToolkitScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final topPad = MediaQuery.of(context).padding.top;
+    final topPad = MediaQuery.of(context).viewPadding.top;
     final repo = context.watch<WellnessRepository>();
     final pedometer = context.watch<PedometerProvider>();
     final healthProvider = context.watch<HealthProvider>();

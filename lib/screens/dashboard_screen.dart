@@ -233,7 +233,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
     ];
 
-    final topPadding = MediaQuery.of(context).padding.top;
+    // viewPadding is the raw hardware safe area, never consumed by parent
+    // widgets — reliably includes the Dynamic Island / notch height.
+    final topPadding = MediaQuery.of(context).viewPadding.top;
 
     return CupertinoScrollbar(
       child: CustomScrollView(
