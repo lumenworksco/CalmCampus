@@ -62,28 +62,29 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // Mount the Flutter view permanently on our own view, pinned to all
-    // four edges. iOS will automatically include the tab bar's height in
-    // the bottom safe-area inset that Flutter sees via MediaQuery.
+    // Mount the Flutter view permanently as a child of this controller,
+    // sized to fill the whole view via autoresizing. iOS automatically
+    // includes the tab bar's height in the bottom safe-area inset that
+    // Flutter sees via MediaQuery.
+    //
+    // CRITICAL: insert *below* the tab bar so the tab bar renders on top,
+    // and *above* whatever UITabBarController inserts for the selected
+    // wrapper VC (which goes in at index 0 by default).
     addChild(flutterVC)
-    flutterVC.view.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(flutterVC.view)
-    NSLayoutConstraint.activate([
-      flutterVC.view.topAnchor.constraint(equalTo: view.topAnchor),
-      flutterVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      flutterVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      flutterVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-    ])
+    flutterVC.view.frame = view.bounds
+    flutterVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.insertSubview(flutterVC.view, belowSubview: tabBar)
     flutterVC.didMove(toParent: self)
   }
 
-  override func viewWillLayoutSubviews() {
-    super.viewWillLayoutSubviews()
-    // Each tab change UIKit re-inserts the selected wrapper's (empty)
-    // view into our hierarchy. Keep the Flutter view above the wrappers
-    // and the tab bar above everything.
-    view.bringSubviewToFront(flutterVC.view)
-    view.bringSubviewToFront(tabBar)
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    // Each tab change UIKit may re-insert the selected wrapper's view
+    // somewhere that disrupts our z-order. Re-assert: Flutter view sits
+    // just below the tab bar, above any wrapper views.
+    if flutterVC.view.superview === view {
+      view.insertSubview(flutterVC.view, belowSubview: tabBar)
+    }
   }
 
   // MARK: - UITabBarControllerDelegate
