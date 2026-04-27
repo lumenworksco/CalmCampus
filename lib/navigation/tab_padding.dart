@@ -4,15 +4,17 @@ import 'package:flutter/widgets.dart';
 /// Bottom padding that screens should reserve so their last card sits
 /// comfortably above the tab bar.
 ///
-/// * **iOS:** the native `UITabBarController` reports its height through
-///   `MediaQuery.padding.bottom`, so we just add a small breathing space.
-/// * **Other platforms:** the Flutter-drawn floating tab bar in
-///   [TabScaffold] is ~64pt tall + 8pt offset, so we add 80pt on top of
-///   the system safe area.
+/// * **iOS (native tab bar):** `LiquidGlassTabController` explicitly sets
+///   `flutterVC.additionalSafeAreaInsets.bottom = tabBar.frame.height`, so
+///   `viewPadding.bottom` already contains (home-indicator + tab-bar height).
+///   We add 16 pt of breathing room above the tab bar pill.
+/// * **Other platforms:** the Flutter-drawn floating tab bar in [TabScaffold]
+///   is ~64 pt tall + 8 pt offset, so we add 80 pt on top of the system inset.
 double tabBarBottomPadding(BuildContext context) {
-  final base = MediaQuery.of(context).padding.bottom;
+  // Use viewPadding (never consumed by parent widgets) for reliability.
+  final base = MediaQuery.of(context).viewPadding.bottom;
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-    return base + 12;
+    return base + 16;   // base already includes tab bar height via Swift patch
   }
   return base + 80;
 }
