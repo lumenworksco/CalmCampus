@@ -53,48 +53,106 @@ class _TabScaffoldState extends State<TabScaffold> {
               child: _screens[i],
             ),
 
-          // Floating glass tab bar
+          // Floating iOS 26 liquid-glass tab bar
           Positioned(
-            left: 20,
-            right: 20,
-            bottom: bottomPadding + 8,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      width: 0.5,
+            left: 0,
+            right: 0,
+            bottom: bottomPadding + 14,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DecoratedBox(
+                    // Outer drop shadows — float the bar above content
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(31),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 48,
+                          offset: const Offset(0, 18),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 0.5,
+                          spreadRadius: 0.5,
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(31),
+                      child: BackdropFilter(
+                        filter: ImageFilter.compose(
+                          outer: ColorFilter.matrix(_saturationMatrix(1.6)),
+                          inner: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                        ),
+                        child: Container(
+                          height: 62,
+                          decoration: BoxDecoration(
+                            // Gradient — slight cool tint top-right for that
+                            // vitreous, lit-from-above look.
+                            gradient: const LinearGradient(
+                              begin: Alignment(0, -1),
+                              end: Alignment(0.1, 1),
+                              colors: [
+                                Color(0xC7FFFFFF), // 0.78 white
+                                Color(0xB8ECECF8), // 0.72 cool tint
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(31),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Top inset highlight — the "wet edge" of glass
+                              Positioned(
+                                top: 0,
+                                left: 14,
+                                right: 14,
+                                child: Container(
+                                  height: 1.5,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0),
+                                        Colors.white.withValues(alpha: 0.95),
+                                        Colors.white.withValues(alpha: 0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 6),
+                                child: Row(
+                                  children: List.generate(_tabs.length, (i) {
+                                    final isSelected = i == _currentIndex;
+                                    return Expanded(
+                                      child: _GlassTabButton(
+                                        icon: _tabs[i].icon,
+                                        label: _tabs[i].label,
+                                        isSelected: isSelected,
+                                        onTap: () => _onTabTapped(i),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(_tabs.length, (i) {
-                      final isSelected = i == _currentIndex;
-                      return _GlassTabButton(
-                        icon: _tabs[i].icon,
-                        label: _tabs[i].label,
-                        isSelected: isSelected,
-                        onTap: () => _onTabTapped(i),
-                      );
-                    }),
+                    ),
                   ),
                 ),
               ),
@@ -138,6 +196,23 @@ class _TabItem {
   final IconData icon;
   final String label;
   const _TabItem({required this.icon, required this.label});
+}
+
+/// 4x5 color matrix for [ColorFilter.matrix] that boosts saturation by [s].
+/// Rec.709 luma weights — same as CSS `saturate()`.
+List<double> _saturationMatrix(double s) {
+  const r = 0.2126;
+  const g = 0.7152;
+  const b = 0.0722;
+  final iR = (1 - s) * r;
+  final iG = (1 - s) * g;
+  final iB = (1 - s) * b;
+  return <double>[
+    iR + s, iG,     iB,     0, 0,
+    iR,     iG + s, iB,     0, 0,
+    iR,     iG,     iB + s, 0, 0,
+    0,      0,      0,      1, 0,
+  ];
 }
 
 class _GlassTabButton extends StatefulWidget {
@@ -199,56 +274,86 @@ class _GlassTabButtonState extends State<_GlassTabButton>
 
   @override
   Widget build(BuildContext context) {
+    final selected = widget.isSelected;
     return Semantics(
       label: widget.label,
       button: true,
-      selected: widget.isSelected,
+      selected: selected,
       child: GestureDetector(
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          width: 72,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                decoration: BoxDecoration(
-                  color: widget.isSelected
-                      ? AppColors.accent.withValues(alpha: 0.14)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ScaleTransition(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          height: 50,
+          decoration: BoxDecoration(
+            // Active tab — inner glass pill that lifts off the bar
+            gradient: selected
+                ? const LinearGradient(
+                    begin: Alignment(0, -1),
+                    end: Alignment(0.1, 1),
+                    colors: [
+                      Color(0xE6FFFFFF), // 0.90
+                      Color(0xCCF5F5FF), // 0.80 cool tint
+                    ],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(25),
+            border: selected
+                ? Border.all(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    width: 0.5,
+                  )
+                : null,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 14,
+                      offset: const Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.07),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: selected ? 1.0 : 0.42,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ScaleTransition(
                   scale: _scale,
                   child: Icon(
                     widget.icon,
-                    size: 22,
-                    color: widget.isSelected
+                    size: 20,
+                    color: selected
                         ? AppColors.accent
-                        : AppColors.textTertiary,
+                        : const Color(0xFF000000),
                   ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight:
-                      widget.isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: widget.isSelected
-                      ? AppColors.accent
-                      : AppColors.textTertiary,
-                  letterSpacing: -0.1,
+                const SizedBox(height: 2),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected
+                        ? AppColors.accent
+                        : const Color(0xFF000000),
+                    letterSpacing: 0.1,
+                    height: 1,
+                  ),
+                  child: Text(widget.label),
                 ),
-                child: Text(widget.label),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

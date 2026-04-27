@@ -17,7 +17,7 @@ class AppColors {
   static const warning = Color(0xFFFF9F0A);
 
   // -- Light surfaces --
-  static const background = Color(0xFFF0F4E2); // cream
+  static const background = Color(0xFFF2F2F7); // iOS system gray 6
   static const surface = Color(0xFFFFFFFF);
 
   // -- Dark surfaces --
