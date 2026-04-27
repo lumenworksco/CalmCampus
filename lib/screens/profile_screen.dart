@@ -37,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             // -- Header with settings gear --
             Padding(
-              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 14, 0),
+              padding: EdgeInsets.fromLTRB(16, topPadding + 8, 14, 0),
               child: Row(
                 children: [
                   const Expanded(

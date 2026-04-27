@@ -17,19 +17,24 @@ import UIKit
 /// # Touch pass-through
 /// UITabBarController's UITransitionView (the placeholder VC container) sits
 /// above Flutter. We neutralise it every layout pass:
-///   • backgroundColor = .clear  — prevents opaque flash during tab animation
-///   • isOpaque = false           — correct compositor hint
-///   • isUserInteractionEnabled = false — touches fall through to Flutter
-/// We also call this in `shouldSelect` so the neutralisation happens BEFORE
-/// UIKit snapshots the view for its cross-fade animation.
+///   • backgroundColor / layer.backgroundColor = .clear — no opaque flash
+///   • isOpaque = false                                  — correct compositor hint
+///   • isUserInteractionEnabled = false                  — touches reach Flutter
 ///
-/// # Safe-area / Dynamic Island
-/// UITabBarController propagates safe-area insets only to the VCs inside its
-/// `viewControllers` array. Our FlutterVC is added via `addChild` but is NOT
-/// in that array, so UIKit never delivers:
-///   • top inset  — Dynamic Island / notch
-///   • bottom inset — tab bar height
-/// We patch both explicitly via `additionalSafeAreaInsets`.
+/// # Tab-switch flash elimination
+/// Returning `true` from `shouldSelect` lets UITabBarController run its own
+/// cross-fade animation, which can briefly show an opaque compositing layer
+/// ("black flash") regardless of how transparent the placeholder VCs are.
+/// Solution: return `false` from `shouldSelect` and drive the selection
+/// ourselves.  Setting `selectedIndex` programmatically:
+///   a) Still animates the Liquid Glass selection pill in the tab bar ✓
+///   b) Does NOT trigger UITabBarController's content-area cross-fade ✓
+/// We guard against the resulting `didSelect` double-notification with a flag.
+///
+/// # Safe-area propagation
+/// UITabBarController only forwards safe-area insets to VCs in `viewControllers`.
+/// FlutterVC is added via `addChild` but is NOT in that array, so we patch
+/// both top (Dynamic Island) and bottom (tab-bar height) manually.
 final class LiquidGlassTabController: UITabBarController, UITabBarControllerDelegate {
 
   // MARK: - Channel contract
@@ -38,13 +43,16 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
   private static let setOnboardingMethod = "setOnboardingMode"
   private static let requestTabMethod    = "requestTab"
 
-  // MARK: - Stored state
+  // MARK: - State
   let flutterEngine: FlutterEngine
   private let flutterVC: FlutterViewController
   private let channel:   FlutterMethodChannel
 
-  /// Guard that prevents an `additionalSafeAreaInsets.top` set from looping back
-  /// through `viewSafeAreaInsetsDidChange` and oscillating.
+  /// Prevents `didSelect` from sending a duplicate channel call when we set
+  /// `selectedIndex` programmatically inside `shouldSelect`.
+  private var suppressDidSelect = false
+
+  /// Guards `viewSafeAreaInsetsDidChange` against oscillation.
   private var lastAppliedTopInset: CGFloat = -1
 
   // MARK: - Init
@@ -73,12 +81,10 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // Give the tab-controller view the app's background colour so that any
-    // compositing gap (during UITabBarController animations) shows cream/gray
-    // instead of black.
+    // App background colour — avoids any compositing gap appearing black.
     view.backgroundColor = UIColor(red: 0.949, green: 0.949, blue: 0.969, alpha: 1)
 
-    // Pin Flutter at the very bottom (index 0) of the subview stack.
+    // Flutter view at the very bottom of the z-stack.
     addChild(flutterVC)
     flutterVC.view.frame            = view.bounds
     flutterVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -94,71 +100,66 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    // Re-assert Flutter at index 0.
+    // Re-assert Flutter at index 0 after each UIKit layout pass.
     if flutterVC.view.superview === view {
       view.insertSubview(flutterVC.view, at: 0)
     }
 
     neutralisePlaceholderViews()
 
-    // ── Bottom safe-area correction ──────────────────────────────────────────
-    // UITabBarController adds tab-bar height to additionalSafeAreaInsets.bottom
-    // only for VCs in its `viewControllers` array. FlutterVC is not in that
-    // array, so we set it manually here. This lets Flutter's
-    // MediaQuery.viewPadding.bottom reflect (homeIndicator + tabBarHeight).
+    // Bottom safe-area: UITabBarController doesn't set this for non-viewControllers
+    // children. Tell Flutter the tab bar occupies the bottom so scroll content
+    // lands above the Liquid Glass pill.
     let tabH = tabBar.frame.height
     if flutterVC.additionalSafeAreaInsets.bottom != tabH {
       flutterVC.additionalSafeAreaInsets.bottom = tabH
     }
   }
 
-  // ── Top safe-area correction (Dynamic Island / notch) ────────────────────
-  // UITabBarController does NOT propagate the window's top inset to FlutterVC
-  // because FlutterVC is not in `viewControllers`. We bridge the gap here.
-  //
-  // The loop-guard (lastAppliedTopInset) prevents the common oscillation:
-  //   set additionalSafeAreaInsets.top
-  //   → UIKit calls viewSafeAreaInsetsDidChange again
-  //   → we recalculate and set again → infinite loop
+  // Top safe-area: patch Dynamic Island / notch for FlutterVC which is not
+  // in `viewControllers` and therefore skipped by UITabBarController's
+  // normal inset propagation.
   override func viewSafeAreaInsetsDidChange() {
     super.viewSafeAreaInsetsDidChange()
     guard let window = view.window else { return }
 
-    let windowTop = window.safeAreaInsets.top
+    let windowTop  = window.safeAreaInsets.top
     guard windowTop > 0 else { return }
 
-    // Isolate the "naturally inherited" top (strip out what we already added).
-    let inherited = flutterVC.view.safeAreaInsets.top
-                    - flutterVC.additionalSafeAreaInsets.top
-    let extra = max(0, windowTop - inherited)
+    // Strip out what we previously added to isolate UIKit's own contribution.
+    let inherited  = flutterVC.view.safeAreaInsets.top
+                   - flutterVC.additionalSafeAreaInsets.top
+    let extra      = max(0, windowTop - inherited)
 
-    guard extra != lastAppliedTopInset else { return }   // no-op if unchanged
+    guard extra != lastAppliedTopInset else { return }
     lastAppliedTopInset = extra
     flutterVC.additionalSafeAreaInsets.top = extra
   }
 
-  // MARK: - Placeholder view neutralisation
+  // MARK: - Placeholder neutralisation
 
-  /// Clears visual and touch properties of every UITabBarController-internal
-  /// view that sits above Flutter (the UITransitionView and its children).
-  /// Skips the tab bar and its glass container so tab interaction still works.
   private func neutralisePlaceholderViews() {
     for sub in view.subviews {
-      guard sub !== flutterVC.view else { continue }
+      guard sub !== flutterVC.view            else { continue }
       guard !subtreeContains(sub, target: tabBar) else { continue }
+      // Visual transparency
       sub.backgroundColor          = .clear
       sub.isOpaque                 = false
+      sub.layer.backgroundColor    = UIColor.clear.cgColor
+      sub.layer.isOpaque           = false
+      // Touch pass-through
       sub.isUserInteractionEnabled = false
       for child in sub.subviews {
-        child.backgroundColor = .clear
-        child.isOpaque        = false
+        child.backgroundColor       = .clear
+        child.isOpaque              = false
+        child.layer.backgroundColor = UIColor.clear.cgColor
+        child.layer.isOpaque        = false
       }
     }
   }
 
   private func subtreeContains(_ root: UIView, target: UIView) -> Bool {
-    if root === target { return true }
-    return root.subviews.contains { subtreeContains($0, target: target) }
+    root === target || root.subviews.contains { subtreeContains($0, target: target) }
   }
 
   // MARK: - UITabBarControllerDelegate
@@ -167,18 +168,33 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
     _ tabBarController: UITabBarController,
     shouldSelect viewController: UIViewController
   ) -> Bool {
-    // Neutralise placeholder views RIGHT NOW — before UIKit snapshots them for
-    // the cross-fade animation. This ensures the animation is between two
-    // fully-transparent layers so the Flutter content beneath is always visible
-    // (no black flash during tab transitions).
-    neutralisePlaceholderViews()
-    return true
+    guard let index = viewControllers?.firstIndex(of: viewController),
+          index != selectedIndex
+    else { return false }
+
+    // Drive the switch ourselves:
+    //   • Returning false cancels UITabBarController's content-area cross-fade
+    //     (the source of the "black flash") while the tab bar pill still
+    //     animates smoothly because we update selectedIndex programmatically.
+    //   • suppressDidSelect prevents didSelect from sending a duplicate
+    //     channel notification (didSelect is called synchronously during the
+    //     selectedIndex assignment below).
+    suppressDidSelect = true
+    selectedIndex = index          // tab bar pill animates; no view cross-fade
+    suppressDidSelect = false
+
+    channel.invokeMethod(Self.setTabMethod, arguments: index)
+    return false
   }
 
   func tabBarController(
     _ tabBarController: UITabBarController,
     didSelect viewController: UIViewController
   ) {
+    // Only fires for programmatic selectedIndex changes not originating from
+    // shouldSelect (e.g., requestTab channel calls).  The suppressDidSelect
+    // flag blocks the duplicate from our own shouldSelect logic above.
+    guard !suppressDidSelect else { return }
     if let index = viewControllers?.firstIndex(of: viewController) {
       channel.invokeMethod(Self.setTabMethod, arguments: index)
     }
@@ -243,7 +259,7 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
     return items.map { item in
       let vc = UIViewController()
       vc.view.backgroundColor          = .clear
-      vc.view.isUserInteractionEnabled = false   // touches fall through to Flutter
+      vc.view.isUserInteractionEnabled = false
       vc.tabBarItem = UITabBarItem(
         title: item.title,
         image: UIImage(systemName: item.sf),

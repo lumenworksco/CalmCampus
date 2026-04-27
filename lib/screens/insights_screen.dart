@@ -81,7 +81,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           children: [
             // -- Large title header --
             Padding(
-              padding: EdgeInsets.fromLTRB(16, topPadding + 16, 16, 2),
+              padding: EdgeInsets.fromLTRB(16, topPadding + 8, 16, 2),
               child: const Text(
                 'Insights',
                 style: TextStyle(

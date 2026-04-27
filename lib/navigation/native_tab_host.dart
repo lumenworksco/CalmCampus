@@ -62,10 +62,10 @@ class _NativeTabHostState extends State<NativeTabHost> {
   int _currentIndex = 0;
 
   static const _screens = <Widget>[
-    DashboardScreen(),
-    InsightsScreen(),
-    ToolkitScreen(),
-    ProfileScreen(),
+    RepaintBoundary(child: DashboardScreen()),
+    RepaintBoundary(child: InsightsScreen()),
+    RepaintBoundary(child: ToolkitScreen()),
+    RepaintBoundary(child: ProfileScreen()),
   ];
 
   @override
