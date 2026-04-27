@@ -2,6 +2,8 @@
 
 **Privacy-first student burnout prevention**
 
+[**lumenworksco.github.io/CalmCampus**](https://lumenworksco.github.io/CalmCampus/) -- pitch site and product overview
+
 CalmCampus is a mobile wellness companion designed for university students. It passively monitors behavioral signals -- sleep patterns, screen time, typing cadence, and focus sessions -- to detect early signs of burnout. When anomalies appear, it delivers evidence-based micro-interventions grounded in CBT and ACT frameworks. All data stays on-device.
 
 > Built for the **KU Leuven KICK Challenge 2026**.
