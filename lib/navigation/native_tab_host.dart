@@ -5,6 +5,7 @@ import '../screens/dashboard_screen.dart';
 import '../screens/insights_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/toolkit_screen.dart';
+import '../theme/app_colors.dart';
 import 'tab_scaffold.dart';
 
 /// Renders the four main screens in an [IndexedStack] driven by tab
@@ -99,9 +100,15 @@ class _NativeTabHostState extends State<NativeTabHost> {
       return const TabScaffold();
     }
 
-    return IndexedStack(
-      index: _currentIndex,
-      children: _screens,
+    // Scaffold gives us a Material ancestor (so Text widgets pick up the
+    // app's text theme instead of rendering with debug-yellow underlines)
+    // and an opaque background so we don't see through to the window.
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
     );
   }
 }

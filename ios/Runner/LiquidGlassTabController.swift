@@ -9,11 +9,13 @@ import UIKit
 /// content, the morphing selection pill, native haptics, and proper
 /// VoiceOver / Dynamic Type support.
 ///
-/// All four tab items map to the same `FlutterViewController`. We move the
-/// Flutter view between four placeholder child view controllers as the user
-/// switches tabs, and tell Flutter which screen to render via a method
-/// channel. One Dart isolate, one Provider tree, one Flutter view — just
-/// reparented as the user navigates.
+/// Architecture: a single `FlutterViewController` is mounted permanently
+/// on this controller's own view, just below the tab bar. The four child
+/// view controllers are empty placeholders — they exist solely so the tab
+/// bar has four items to render. When the user taps a tab, we send the
+/// new index to Flutter via a method channel; Flutter swaps which screen
+/// sits at the top of an `IndexedStack`. Nothing in UIKit is reparented,
+/// so there's no visual flicker and no re-attachment cost.
 final class LiquidGlassTabController: UITabBarController, UITabBarControllerDelegate {
 
   // MARK: - Channel contract
@@ -45,7 +47,6 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
 
     self.delegate = self
     self.viewControllers = makePlaceholderTabs()
-    self.flutterVC.view.backgroundColor = .clear
 
     self.channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call: call, result: result)
@@ -60,10 +61,29 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Embed the Flutter view in whichever tab is selected at launch.
-    if let first = viewControllers?.first {
-      embedFlutter(in: first)
-    }
+
+    // Mount the Flutter view permanently on our own view, pinned to all
+    // four edges. iOS will automatically include the tab bar's height in
+    // the bottom safe-area inset that Flutter sees via MediaQuery.
+    addChild(flutterVC)
+    flutterVC.view.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(flutterVC.view)
+    NSLayoutConstraint.activate([
+      flutterVC.view.topAnchor.constraint(equalTo: view.topAnchor),
+      flutterVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      flutterVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      flutterVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+    ])
+    flutterVC.didMove(toParent: self)
+  }
+
+  override func viewWillLayoutSubviews() {
+    super.viewWillLayoutSubviews()
+    // Each tab change UIKit re-inserts the selected wrapper's (empty)
+    // view into our hierarchy. Keep the Flutter view above the wrappers
+    // and the tab bar above everything.
+    view.bringSubviewToFront(flutterVC.view)
+    view.bringSubviewToFront(tabBar)
   }
 
   // MARK: - UITabBarControllerDelegate
@@ -72,7 +92,6 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
     _ tabBarController: UITabBarController,
     didSelect viewController: UIViewController
   ) {
-    embedFlutter(in: viewController)
     if let index = viewControllers?.firstIndex(of: viewController) {
       channel.invokeMethod(Self.setTabMethod, arguments: index)
     }
@@ -99,7 +118,9 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
          (0..<tabs.count).contains(index)
       {
         selectedIndex = index
-        embedFlutter(in: tabs[index])
+        // selectedIndex assignment doesn't fire didSelect, so notify
+        // Flutter explicitly.
+        channel.invokeMethod(Self.setTabMethod, arguments: index)
         result(nil)
       } else {
         result(FlutterError(
@@ -116,36 +137,12 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
   // MARK: - Tab bar visibility
 
   private func setTabBarVisible(_ visible: Bool) {
-    // Animate the tab bar out of the way during onboarding so the Flutter
-    // splash/onboarding fills the full screen.
+    if visible { self.tabBar.isHidden = false }
     UIView.animate(withDuration: 0.22) {
       self.tabBar.alpha = visible ? 1 : 0
     } completion: { _ in
       self.tabBar.isHidden = !visible
     }
-    if visible { self.tabBar.isHidden = false }
-  }
-
-  // MARK: - Flutter view reparenting
-
-  /// Move the shared Flutter view controller to be a child of `parent` and
-  /// fill its bounds. Called every time the user switches tabs. UIKit's
-  /// addChild/removeFromParent contract is followed so view-appearance
-  /// callbacks fire on the Flutter side as expected.
-  private func embedFlutter(in parent: UIViewController) {
-    if flutterVC.parent === parent { return }
-
-    if flutterVC.parent != nil {
-      flutterVC.willMove(toParent: nil)
-      flutterVC.view.removeFromSuperview()
-      flutterVC.removeFromParent()
-    }
-
-    parent.addChild(flutterVC)
-    parent.view.addSubview(flutterVC.view)
-    flutterVC.view.frame = parent.view.bounds
-    flutterVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    flutterVC.didMove(toParent: parent)
   }
 
   // MARK: - Tab item factory
@@ -160,8 +157,9 @@ final class LiquidGlassTabController: UITabBarController, UITabBarControllerDele
 
     return items.map { item in
       let vc = UIViewController()
-      vc.view.backgroundColor = UIColor(named: "BackgroundColor")
-        ?? UIColor.systemGray6
+      // Transparent — Flutter view sits above and provides the actual
+      // background colour.
+      vc.view.backgroundColor = .clear
       vc.tabBarItem = UITabBarItem(
         title: item.title,
         image: UIImage(systemName: item.sf),
