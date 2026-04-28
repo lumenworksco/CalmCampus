@@ -62,6 +62,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Calm Campus uses your photo library so you can set a profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Calm Campus uses your camera so you can take a profile photo.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Calm Campus uses motion data to count your daily steps and detect activity for wellness tracking. All data stays on your device.</string>
 	<key>NSHealthShareUsageDescription</key>

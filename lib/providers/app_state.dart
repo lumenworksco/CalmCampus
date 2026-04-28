@@ -12,6 +12,7 @@ class AppState extends ChangeNotifier {
   // -- Profile --
   String _userName = '';
   DateTime? _memberSince;
+  String? _avatarPath;
 
   // -- Notification master switch (mirrors what the user sees) --
   bool _notificationsEnabled = true;
@@ -26,6 +27,7 @@ class AppState extends ChangeNotifier {
   bool get hasOnboarded => _hasOnboarded;
   String get userName => _userName;
   DateTime? get memberSince => _memberSince;
+  String? get avatarPath => _avatarPath;
   bool get notificationsEnabled => _notificationsEnabled;
   bool get checkinReminderEnabled => _checkinReminderEnabled;
   TimeOfDay get checkinReminderTime => _checkinReminderTime;
@@ -36,6 +38,7 @@ class AppState extends ChangeNotifier {
   static const _kHasOnboarded = 'hasOnboarded';
   static const _kUserName = 'userName';
   static const _kMemberSince = 'memberSince';
+  static const _kAvatarPath = 'avatarPath';
   static const _kNotificationsEnabled = 'notificationsEnabled';
   static const _kCheckinReminderEnabled = 'checkinReminderEnabled';
   static const _kCheckinReminderHour = 'checkinReminderHour';
@@ -48,6 +51,7 @@ class AppState extends ChangeNotifier {
 
     _hasOnboarded = prefs.getBool(_kHasOnboarded) ?? false;
     _userName = prefs.getString(_kUserName) ?? '';
+    _avatarPath = prefs.getString(_kAvatarPath);
 
     final ms = prefs.getInt(_kMemberSince);
     if (ms != null) {
@@ -82,6 +86,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kUserName, _userName);
+  }
+
+  Future<void> setAvatarPath(String? path) async {
+    _avatarPath = path;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    if (path != null) {
+      await prefs.setString(_kAvatarPath, path);
+    } else {
+      await prefs.remove(_kAvatarPath);
+    }
   }
 
   Future<void> setNotificationsEnabled(bool value) async {

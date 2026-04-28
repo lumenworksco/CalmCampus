@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../navigation/tab_padding.dart';
@@ -78,6 +81,7 @@ class ProfileScreen extends StatelessWidget {
             // -- Avatar + name card --
             _avatarCard(
               context,
+              appState: appState,
               displayName: displayName,
               memberSince: memberSince,
               onEditName: () => _editName(context, appState),
@@ -158,6 +162,60 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showAvatarOptions(BuildContext context, AppState appState) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _pickImage(context, appState, ImageSource.camera);
+            },
+            child: const Text('Take Photo'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _pickImage(context, appState, ImageSource.gallery);
+            },
+            child: const Text('Choose from Library'),
+          ),
+          if (appState.avatarPath != null)
+            CupertinoActionSheetAction(
+              isDestructiveAction: true,
+              onPressed: () {
+                Navigator.pop(ctx);
+                appState.setAvatarPath(null);
+              },
+              child: const Text('Remove Photo'),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(
+    BuildContext context,
+    AppState appState,
+    ImageSource source,
+  ) async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (file != null) {
+      await appState.setAvatarPath(file.path);
+    }
+  }
+
   Future<void> _editName(BuildContext context, AppState appState) async {
     final controller = TextEditingController(text: appState.userName);
     final result = await showCupertinoDialog<String>(
@@ -197,6 +255,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _avatarCard(
     BuildContext context, {
+    required AppState appState,
     required String displayName,
     required DateTime memberSince,
     required VoidCallback onEditName,
@@ -204,54 +263,77 @@ class ProfileScreen extends StatelessWidget {
     final initials = _initialsOf(displayName);
     final since = DateFormat('MMMM yyyy').format(memberSince);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onEditName,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            // Photo avatar with initials fallback if image fails to load
-            ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: Image.asset(
-                'assets/avatar.jpg',
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, st) => Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.accent,
-                        Color(0xFF5AC8FA),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+    // Build the avatar image widget.
+    Widget avatarImage;
+    if (appState.avatarPath != null) {
+      avatarImage = Image.file(
+        File(appState.avatarPath!),
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => _initialsAvatar(initials),
+      );
+    } else {
+      avatarImage = Image.asset(
+        'assets/avatar.jpg',
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => _initialsAvatar(initials),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          // Avatar — tapping opens image picker.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _showAvatarOptions(context, appState),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: avatarImage,
+                ),
+                // Camera badge
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.surface,
+                        width: 2,
+                      ),
                     ),
-                    borderRadius: BorderRadius.all(Radius.circular(28)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      CupertinoIcons.camera_fill,
+                      size: 9,
                       color: CupertinoColors.white,
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 14),
-            Expanded(
+          ),
+          const SizedBox(width: 14),
+          // Name + member since — tapping edits name.
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onEditName,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -274,12 +356,40 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+          ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onEditName,
+            child: const Icon(
               CupertinoIcons.pencil,
               size: 14,
               color: AppColors.textTertiary,
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _initialsAvatar(String initials) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.accent, Color(0xFF5AC8FA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.all(Radius.circular(28)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: CupertinoColors.white,
         ),
       ),
     );
