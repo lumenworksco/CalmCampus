@@ -274,13 +274,7 @@ class ProfileScreen extends StatelessWidget {
         errorBuilder: (ctx, err, st) => _initialsAvatar(initials),
       );
     } else {
-      avatarImage = Image.asset(
-        'assets/avatar.jpg',
-        width: 56,
-        height: 56,
-        fit: BoxFit.cover,
-        errorBuilder: (ctx, err, st) => _initialsAvatar(initials),
-      );
+      avatarImage = _initialsAvatar(initials);
     }
 
     return Container(
