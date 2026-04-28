@@ -246,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 // -- Header --
                 Padding(
-                  padding: EdgeInsets.fromLTRB(16, topPadding + 8, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, topPadding, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

@@ -106,7 +106,7 @@ class ToolkitScreen extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-          top: topPad + 8, bottom: tabBarBottomPadding(context)),
+          top: topPad, bottom: tabBarBottomPadding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
