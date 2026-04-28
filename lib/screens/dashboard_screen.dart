@@ -337,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   for (final anomaly in displayAnomalies)
                     Container(
                       key: ValueKey(anomaly.id),
-                      margin: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+                      margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(

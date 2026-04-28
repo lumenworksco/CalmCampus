@@ -149,7 +149,7 @@ class ToolkitScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             SizedBox(
               height: 100,
               child: ListView.separated(
@@ -164,7 +164,7 @@ class ToolkitScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
           ],
 
           // ---- All Tools ----
@@ -179,9 +179,9 @@ class ToolkitScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _ToolsGrid(onTap: (id) => _openTool(context, id, repo)),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
 
           // ---- Campus Support ----
           _CampusSupportCard(onTap: () => _showResources(context)),
@@ -411,6 +411,7 @@ class _ToolsGrid extends StatelessWidget {
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         childAspectRatio: 1.25,

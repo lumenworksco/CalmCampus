@@ -333,6 +333,7 @@ class ProfileScreen extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 8,
@@ -434,7 +435,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _sectionLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 20, 14, 6),
+      padding: const EdgeInsets.fromLTRB(26, 12, 14, 4),
       child: Text(
         text,
         style: const TextStyle(
