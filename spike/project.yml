@@ -1,0 +1,73 @@
+name: CalmCampusSpike
+# Generate the Xcode project with `xcodegen generate` (the .xcodeproj is gitignored).
+# Before running on a device: set DEVELOPMENT_TEAM below (or in Xcode's Signing tab),
+# and if the bundle IDs / App Group are taken, change them here and in Shared/SpikeLog.swift.
+
+options:
+  bundleIdPrefix: co.lumenworks.calmcampus
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  CalmCampusSpike:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    dependencies:
+      - target: ScreenTimeMonitor
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: CC Spike
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
+        NSHealthShareUsageDescription: The spike reads sleep, steps and exercise time to test which signals are available.
+        NSMotionUsageDescription: The spike reads motion history to test whether sleep can be estimated without a watch.
+        UIBackgroundModes: [fetch]
+        BGTaskSchedulerPermittedIdentifiers: [co.lumenworks.calmcampus.spike.refresh]
+    entitlements:
+      path: App/CalmCampusSpike.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.healthkit.background-delivery: true
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.co.lumenworks.calmcampus.spike]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus.spike
+
+  ScreenTimeMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ScreenTimeMonitor
+      - Shared
+    info:
+      path: ScreenTimeMonitor/Info.plist
+      properties:
+        CFBundleDisplayName: ScreenTimeMonitor
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ScreenTimeMonitor
+    entitlements:
+      path: ScreenTimeMonitor/ScreenTimeMonitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups: [group.co.lumenworks.calmcampus.spike]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus.spike.ScreenTimeMonitor
