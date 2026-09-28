@@ -9,10 +9,14 @@ Needs full Xcode 26+ (not just the Command Line Tools), a **physical iPhone** (S
 ```bash
 cd spike
 xcodegen generate            # brew install xcodegen, if missing
-open CalmCampusSpike.xcodeproj
+open -a Xcode CalmCampusSpike.xcodeproj
 ```
 
-1. In Xcode, set your team for both targets (or fill `DEVELOPMENT_TEAM` in `project.yml`).
+1. Pick the scheme:
+   - **CalmCampusSpikeLite** — Q1, Q2, Q4, Q5. Works with a free Personal Team.
+   - **CalmCampusSpike** — adds Q3 (Screen Time). Needs a paid Developer Program team: Apple doesn't grant Family Controls to Personal Teams. Both share a bundle ID, so installing one replaces the other.
+
+   The team comes from `DEVELOPMENT_TEAM` in `project.yml`; change it there when switching to the paid team.
 2. If signing complains the bundle ID or App Group is taken, change `co.lumenworks.calmcampus.spike` / `group.co.lumenworks.calmcampus.spike` in `project.yml` **and** `Shared/SpikeLog.swift`, then regenerate.
 3. Run on the phone, go through Q1–Q5, then **leave it installed for 3–5 days** of normal use — most answers are about what happens in the background over time.
 

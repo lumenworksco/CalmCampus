@@ -26,7 +26,12 @@ struct RootView: View {
                 Section("Questions") {
                     NavigationLink("Q1 · HealthKit: sleep, steps, exercise") { HealthView() }
                     NavigationLink("Q2 · Sleep from motion (no watch)") { MotionSleepView() }
+                    #if NO_SCREEN_TIME
+                    Text("Q3 · Screen time — needs a paid team (full target)")
+                        .foregroundStyle(.secondary)
+                    #else
                     NavigationLink("Q3 · Screen time thresholds") { ScreenTimeView() }
+                    #endif
                     NavigationLink("Q4 · On-device AI") { OnDeviceAIView() }
                     NavigationLink("Q5 · Daily background job") { BackgroundView() }
                 }

@@ -11,7 +11,7 @@
 ## Commands
 
 ```bash
-cd spike && xcodegen generate && open CalmCampusSpike.xcodeproj   # needs full Xcode
+cd spike && xcodegen generate && open -a Xcode CalmCampusSpike.xcodeproj   # needs full Xcode
 # compile check without signing:
 xcodebuild -project spike/CalmCampusSpike.xcodeproj -scheme CalmCampusSpike \
   -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build

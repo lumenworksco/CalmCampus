@@ -1,6 +1,6 @@
 name: CalmCampusSpike
 # Generate the Xcode project with `xcodegen generate` (the .xcodeproj is gitignored).
-# Before running on a device: set DEVELOPMENT_TEAM below (or in Xcode's Signing tab),
+# DEVELOPMENT_TEAM below is the Personal Team; change it (or override in Xcode) for another team,
 # and if the bundle IDs / App Group are taken, change them here and in Shared/SpikeLog.swift.
 
 options:
@@ -11,7 +11,7 @@ options:
 
 settings:
   base:
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: H74552K78K   # Florian Braun (Personal Team) — override in Xcode for other teams
     CODE_SIGN_STYLE: Automatic
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1"
@@ -28,8 +28,8 @@ targets:
     dependencies:
       - target: ScreenTimeMonitor
     info:
-      path: App/Info.plist
-      properties:
+      path: Config/Info.plist
+      properties: &appInfo
         CFBundleDisplayName: CC Spike
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -39,7 +39,7 @@ targets:
         UIBackgroundModes: [fetch]
         BGTaskSchedulerPermittedIdentifiers: [co.lumenworks.calmcampus.spike.refresh]
     entitlements:
-      path: App/CalmCampusSpike.entitlements
+      path: Config/CalmCampusSpike.entitlements
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
@@ -49,6 +49,29 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus.spike
+
+  # Same app without Screen Time (Q3), for free Personal Teams: Apple only grants
+  # the Family Controls capability to paid Developer Program teams.
+  CalmCampusSpikeLite:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    info:
+      path: Config/Info-Lite.plist
+      properties: *appInfo
+    entitlements:
+      path: Config/CalmCampusSpikeLite.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.healthkit.background-delivery: true
+        com.apple.security.application-groups: [group.co.lumenworks.calmcampus.spike]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus.spike
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) NO_SCREEN_TIME
 
   ScreenTimeMonitor:
     type: app-extension
