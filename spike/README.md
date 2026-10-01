@@ -36,17 +36,33 @@ Ideally run it on a few phones: one with an Apple Watch, one without, one withou
 
 Family Controls (Screen Time API) only works in development builds until Apple grants the **distribution entitlement** — request it at developer.apple.com/contact/request/family-controls-distribution. Approval can take weeks, so request it early.
 
-## Findings (fill in)
+## Findings
+
+### Run 1: Florian, iPhone 16, iOS 27, WHOOP band, Sept 26 – Oct 1 2026 (Lite build, so no Q3)
 
 | Signal | Available? | Precision / coverage | Reliability in background | Go / no-go |
 |--------|-----------|----------------------|---------------------------|-----------|
-| Steps (HealthKit) | | | | |
-| Exercise minutes | | | | |
-| Sleep (HealthKit) — with Watch | | | | |
-| Sleep (HealthKit) — iPhone only | | | | |
-| Sleep (motion estimate) | | error vs HealthKit: | n/a | |
-| Screen time (thresholds) | | ±30 min? event delay: | | |
-| On-device AI | | devices supported: · latency: | n/a | |
-| Daily background job | | runs per day: | | |
+| Steps (HealthKit) | Yes, every day | 4.7k–18.6k/day, plausible | Observer wakes ~1–2×/day | **Go** |
+| Exercise minutes | 3 of 5 days | Missing on days without a logged workout. Mostly an Apple Watch metric, so WHOOP only fills it sometimes | Same as steps | **No-go as a core signal**. Use steps; show exercise only when present |
+| Sleep (HealthKit), wearable | Yes, every night | 5.9–9.0 h asleep, 7.4–9.7 h in bed. Source: **WHOOP**, not an Apple Watch: third-party wearables count | Wake-ups come in the morning after the wearable syncs | **Go** |
+| Sleep (HealthKit), iPhone only | Not tested | | | Test on a phone with no wearable |
+| Sleep (motion estimate) | Yes | **Overestimates by 2.5–7.8 h** (8.4–15.3 h vs 5.9–9.0 h). Measures "phone left untouched", e.g. from 18:08 or until 13:26. 2 of 7 nights missing | n/a | **No-go** |
+| Screen time (thresholds) | Not tested | Needs a paid team | | Pending |
+| On-device AI | Yes ("available") | 3 reframes in **4.2 s**, warm and usable. One was validation rather than a reframe, so the prompt needs tuning. Needs Apple Intelligence hardware (iPhone 15 Pro or newer) | n/a | **Go, with a non-AI fallback** |
+| Daily background job (`BGAppRefreshTask`) | Yes | **Ran once in ~3.5 days** (Sept 28, 13:45), never again even though it was rescheduled | Unreliable when the app is rarely opened | **No-go** for daily processing |
 
-**Conclusion → MVP signal set:**
+Caveat on the motion estimate: one user, and the heuristic is crude. But with no screen-unlock data on iOS, "phone still" can't be told apart from "phone on the desk".
+
+### Conclusion → MVP signal set
+
+- **Sleep:** HealthKit sleep from any source (Apple Watch, WHOOP, Oura, iPhone sleep schedule). If there's none, ask about sleep in the daily check-in. Drop the motion estimate.
+- **Activity:** HealthKit steps. Exercise minutes only as a bonus when present.
+- **Screen time:** pending Q3 (paid team + Family Controls).
+- **AI:** Apple Foundation Models where available (prewarm the session, stream the output), curated static reframes otherwise.
+- **Daily processing:** don't depend on a scheduled job. Close out days lazily, whenever the app opens or a HealthKit observer wakes it. Those wakes arrived reliably, 1–2 a day.
+- **Product implication:** the fully passive experience needs a wearable or a sleep schedule. Students without one rely on check-ins, so the check-in has to stand on its own.
+
+### Still to test
+
+- Q3 Screen Time on a paid team.
+- A phone **without a wearable** and **without Apple Intelligence**. Hélène's iPhone 15 covers both: it shows iPhone-only sleep coverage and the AI fallback.
