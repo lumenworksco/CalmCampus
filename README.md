@@ -19,13 +19,14 @@ The previous Flutter prototype is preserved at git tag [`flutter-final`](https:/
 ## Roadmap
 
 1. **Feasibility spike** (`spike/`) — measure which signals iOS actually provides and how reliably.
-2. **iOS MVP** — SwiftUI + SwiftData; real signals only, a calibration period for new users, on-device AI.
+2. **iOS MVP** (`ios/`, in progress) — SwiftUI + SwiftData; real signals only, a calibration period for new users, on-device AI. First feature: an adaptive daily check-in that asks a few targeted questions based on Apple Health data and earlier answers.
 3. **Pilot** — TestFlight study with KU Leuven students: do passive signals track self-reported check-ins?
 4. **Android** — Kotlin/Compose + Health Connect, sharing the scoring engine.
 
 ## Repository layout
 
 ```
+ios/            The iOS app (SwiftUI, XcodeGen project)
 spike/          iOS feasibility spike (XcodeGen project)
 docs/           Pitch site + impact report (GitHub Pages)
 design/

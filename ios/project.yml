@@ -1,0 +1,62 @@
+name: CalmCampus
+# The real iOS app. Generate with `xcodegen generate` (the .xcodeproj is gitignored).
+
+options:
+  bundleIdPrefix: co.lumenworks.calmcampus
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: H74552K78K   # Florian Braun (Personal Team); switch to the paid team when enrolled
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  CalmCampus:
+    type: application
+    platform: iOS
+    sources:
+      - CalmCampus
+    info:
+      path: Config/Info.plist
+      properties:
+        CFBundleDisplayName: CalmCampus
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
+        NSHealthShareUsageDescription: CalmCampus reads your sleep and steps to ask better check-in questions. This data never leaves your iPhone.
+    entitlements:
+      path: Config/CalmCampus.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus
+
+  CalmCampusTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - CalmCampusTests
+    dependencies:
+      - target: CalmCampus
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.lumenworks.calmcampus.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  CalmCampus:
+    build:
+      targets:
+        CalmCampus: all
+        CalmCampusTests: [test]
+    test:
+      targets:
+        - CalmCampusTests
