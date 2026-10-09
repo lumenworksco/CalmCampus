@@ -26,3 +26,8 @@ captures/
 # Editors
 *.swp
 .history
+
+# ML workspace: environment, caches and model weights stay local (weights live on Hugging Face)
+ml/.venv/
+ml/.cache/
+ml/runs/

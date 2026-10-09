@@ -1,0 +1,22 @@
+# LoRA fine-tune of Qwen3.5-0.8B for CalmCampus thought reframing.
+model: Qwen/Qwen3.5-0.8B
+train: true
+data: data/out
+fine_tune_type: lora
+mask_prompt: true          # learn only the assistant's answer, not the system prompt
+num_layers: -1             # adapt all layers
+batch_size: 2
+iters: 420                 # ~3 epochs over 278 rows
+learning_rate: 1.0e-4
+steps_per_report: 10
+steps_per_eval: 35
+val_batches: -1
+save_every: 35
+grad_checkpoint: true
+max_seq_length: 512
+seed: 42
+adapter_path: runs/lora-0.8b
+lora_parameters:
+  rank: 16
+  scale: 20.0
+  dropout: 0.05
