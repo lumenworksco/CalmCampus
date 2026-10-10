@@ -31,3 +31,7 @@ captures/
 ml/.venv/
 ml/.cache/
 ml/runs/
+
+# Python
+__pycache__/
+*.pyc

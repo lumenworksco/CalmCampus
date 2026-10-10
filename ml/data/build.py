@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-import reframes_en_1, reframes_en_2, reframes_en_3, reframes_nl, safety_unclear, test_set  # noqa: E402
+import reframes_en_1, reframes_en_2, reframes_en_3, reframes_nl, safety_unclear, safety_more, test_set  # noqa: E402
 from spec import SYSTEM_PROMPT, PATTERNS, MAX_REFRAME_WORDS  # noqa: E402
 
 OUT = Path(__file__).parent / "out"
@@ -38,8 +38,9 @@ def main():
     for module in (reframes_en_1, reframes_en_2, reframes_en_3, reframes_nl):
         rows += [row(t, reframe_answer(p, r)) for t, p, r in module.DATA]
     rows += [row(t, reframe_answer(p, r)) for t, p, r in safety_unclear.HYPERBOLE]
-    rows += [row(t, '{"safety": true}') for t in safety_unclear.SAFETY]
-    rows += [row(t, '{"unclear": true}') for t in safety_unclear.UNCLEAR]
+    rows += [row(t, reframe_answer(p, r)) for t, p, r in safety_more.HYPERBOLE_MORE]
+    rows += [row(t, '{"safety": true}') for t in safety_unclear.SAFETY + safety_more.SAFETY_MORE]
+    rows += [row(t, '{"unclear": true}') for t in safety_unclear.UNCLEAR + safety_more.UNCLEAR_MORE]
 
     test_texts = {i["text"].strip().lower() for i in test_set.items()}
     leaks = [r for r in rows if r["messages"][1]["content"].strip().lower() in test_texts]

@@ -1,21 +1,21 @@
-# LoRA fine-tune of Qwen3.5-0.8B for CalmCampus thought reframing.
-model: Qwen/Qwen3.5-0.8B
+# QLoRA fine-tune of Qwen3-1.7B (4-bit base), run 2: 3x more crisis data. Pick the checkpoint by test behaviour (sweep.sh), not val loss.
+model: mlx-community/Qwen3-1.7B-4bit
 train: true
 data: data/out
 fine_tune_type: lora
 mask_prompt: true          # learn only the assistant's answer, not the system prompt
 num_layers: -1             # adapt all layers
 batch_size: 2
-iters: 420                 # ~3 epochs over 278 rows
+iters: 600                 # ~3 epochs over 398 rows
 learning_rate: 1.0e-4
 steps_per_report: 10
-steps_per_eval: 35
+steps_per_eval: 50
 val_batches: -1
-save_every: 35
+save_every: 50
 grad_checkpoint: true
 max_seq_length: 512
 seed: 42
-adapter_path: runs/lora-0.8b
+adapter_path: runs/lora-1.7b-v2
 lora_parameters:
   rank: 16
   scale: 20.0
