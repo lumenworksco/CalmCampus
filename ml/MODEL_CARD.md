@@ -41,7 +41,7 @@ You are CalmCampus, a supportive companion for university students. The user sha
 
 ```python
 from mlx_lm import load, generate
-model, tok = load("<this repo>")
+model, tok = load("iPwnds/calmcampus-reframe-1.7b-4bit")
 messages = [{"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": "I failed my stats exam, so I'm going to fail the whole year."}]
 prompt = tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)

@@ -2,7 +2,7 @@
 
 A small on-device language model, fine-tuned for one job: turning a student's negative automatic thought into three balanced alternative thoughts (CBT-style reframing). It recognises crisis messages and returns `{"safety": true}` instead of reframing them, and returns `{"unclear": true}` for off-topic input.
 
-- **Status:** v0.1 research preview, see `MODEL_CARD.md` for evaluation and limitations.
+- **Status:** v0.1 research preview, see `MODEL_CARD.md` for evaluation and limitations. Weights: [iPwnds/calmcampus-reframe-1.7b-4bit](https://huggingface.co/iPwnds/calmcampus-reframe-1.7b-4bit) (private).
 - **Base:** [Qwen/Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) (Apache-2.0). Runs on iPhone through MLX (`mlx-swift-lm` supports `qwen3`).
 - **Method:** QLoRA with `mlx-lm` on an M3 MacBook (8 GB): LoRA trained on the 4-bit base, fused into the bf16 base, then quantized to 4-bit.
 - **Why not Qwen3.5:** its Gated DeltaNet layers have a fast Metal kernel for inference but train through a per-token loop in mlx-lm (~2 tok/s on an M3), so a run would take ~8 h.
