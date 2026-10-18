@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ios-tests:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: cd ios && xcodegen generate
+      - name: Pick an iPhone simulator
+        run: |
+          NAME=$(xcrun simctl list devices available | grep -E '^\s+iPhone' | head -1 | sed -E 's/^\s+(.*) \([0-9A-F-]{36}\).*/\1/')
+          echo "SIM_NAME=$NAME" >> "$GITHUB_ENV"
+      - name: Unit tests
+        run: |
+          xcodebuild test -project ios/CalmCampus.xcodeproj -scheme CalmCampus \
+            -destination "platform=iOS Simulator,name=$SIM_NAME" CODE_SIGNING_ALLOWED=NO
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check local links and assets in the site
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, sys
+          root = pathlib.Path("docs")
+          bad = []
+          for page in root.glob("*.html"):
+              for ref in re.findall(r'(?:href|src)="([^"#?]+)"', page.read_text()):
+                  if re.match(r'(https?:|mailto:|data:)', ref):
+                      continue
+                  if not (root / ref).exists():
+                      bad.append(f"{page}: {ref}")
+          print("\n".join(bad) or "ok")
+          sys.exit(1 if bad else 0)
+          PY

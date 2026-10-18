@@ -2,6 +2,7 @@
 
 **A privacy-first wellness companion for university students.**
 
+[![CI](https://github.com/lumenworksco/CalmCampus/actions/workflows/ci.yml/badge.svg)](https://github.com/lumenworksco/CalmCampus/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform: iOS](https://img.shields.io/badge/platform-iOS%2017%2B-blue.svg)
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI%20%2B%20SwiftData-orange.svg)
@@ -81,7 +82,7 @@ The reframing model has its own setup, see [`ml/README.md`](ml/README.md).
 
 ## Contributing
 
-Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). To report a security or privacy problem, see [SECURITY.md](SECURITY.md).
+Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). To report a security or privacy problem, see [SECURITY.md](SECURITY.md).
 
 ## Team
 

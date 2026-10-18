@@ -33,4 +33,4 @@ Edit `project.yml`, not the generated `.xcodeproj`. Logic such as `CheckinPlanne
 
 By contributing you agree that your work is released under the [MIT License](LICENSE).
 
-Please be respectful and constructive; we follow the spirit of the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+Please be respectful and constructive; see the [Code of Conduct](CODE_OF_CONDUCT.md).
