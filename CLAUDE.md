@@ -6,6 +6,8 @@
 
 - `ios/` — the real iOS app (SwiftUI + SwiftData, XcodeGen). First feature: the adaptive daily check-in (`CalmCampus/Checkin/`): wording in `QuestionBank`, rules in `CheckinPlanner` (pure, unit-tested), answers stored as flat versioned rows (`Data/CheckinResponse`).
 - `spike/` — throwaway iOS feasibility spike (what sensor data iOS actually gives us). See `spike/README.md`.
+- `ml/` — fine-tuned on-device reframing model (data, MLX training, eval, `MODEL_CARD.md`). See `ml/README.md`; weights live on Hugging Face, not in git.
+- `research/` — evidence dossier and source index backing the site's claims.
 - `docs/` — pitch site + impact report, served by GitHub Pages (CNAME). Plain HTML/CSS.
 - `design/mockups/` — HTML mockups of the app screens; `design/brand/` — app icon, palette.
 
